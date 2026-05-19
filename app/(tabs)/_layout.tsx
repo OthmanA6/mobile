@@ -135,5 +135,6 @@ const styles = StyleSheet.create({
   tabBarItem: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 15,
   },
 });
