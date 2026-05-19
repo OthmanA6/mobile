@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Mail, Lock, ChevronRight, Fingerprint } from 'lucide-react-native';
+import { TrendingUp, Mail, Lock, ChevronRight, Fingerprint, Eye, EyeOff } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import { useForm, Controller } from 'react-hook-form';
@@ -34,6 +34,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -53,7 +54,15 @@ export default function LoginScreen() {
       const response = await authService.login(data);
       if (response.token) {
         await AsyncStorage.setItem('userToken', response.token);
-        router.replace('/(tabs)/profile');
+        
+        const userRole = response.user?.role || 'STUDENT';
+        await AsyncStorage.setItem('userRole', userRole);
+
+        if (userRole.toUpperCase() === 'INSTRUCTOR') {
+          router.replace('/(tabs)/InstructorDashboard');
+        } else {
+          router.replace('/(tabs)/StudentDashboard');
+        }
       } else {
         Alert.alert('Login Failed', 'No token received');
       }
@@ -127,8 +136,15 @@ export default function LoginScreen() {
                         placeholderTextColor={theme.colors.outline}
                         value={value}
                         onChangeText={onChange}
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                       />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        {showPassword ? (
+                          <EyeOff size={18} color={theme.colors.onSurfaceVariant} />
+                        ) : (
+                          <Eye size={18} color={theme.colors.onSurfaceVariant} />
+                        )}
+                      </TouchableOpacity>
                     </View>
                   )}
                 />

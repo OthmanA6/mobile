@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Mail, User, ShieldCheck, ArrowLeft, Lock, CreditCard } from 'lucide-react-native';
+import { TrendingUp, Mail, User, ShieldCheck, ArrowLeft, Lock, CreditCard, Eye, EyeOff } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import { useForm, Controller } from 'react-hook-form';
@@ -36,6 +36,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -190,8 +191,15 @@ export default function RegisterScreen() {
                         placeholderTextColor={theme.colors.outline}
                         value={value}
                         onChangeText={onChange}
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                       />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        {showPassword ? (
+                          <EyeOff size={18} color={theme.colors.onSurfaceVariant} />
+                        ) : (
+                          <Eye size={18} color={theme.colors.onSurfaceVariant} />
+                        )}
+                      </TouchableOpacity>
                     </View>
                   )}
                 />
