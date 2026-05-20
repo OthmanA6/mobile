@@ -59,6 +59,13 @@ export default function RegisterScreen() {
   const selectedRole = watch('role');
 
   const onRegister = async (data: RegisterForm) => {
+    if (data.role !== 'STUDENT' && data.role !== 'INSTRUCTOR') {
+      Alert.alert(
+        'Registration Restricted / التسجيل غير متاح',
+        'Only Students and Instructors can create accounts via the mobile application.\nمتاح فقط للطلاب والمدربين إنشاء حسابات عبر تطبيق الهاتف.'
+      );
+      return;
+    }
     setIsLoading(true);
     try {
       await authService.register(data);
@@ -209,7 +216,7 @@ export default function RegisterScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>YOUR ROLE</Text>
                 <View style={styles.roleContainer}>
-                  {['STUDENT', 'INSTRUCTOR', 'HOD'].map((r) => (
+                  {['STUDENT', 'INSTRUCTOR'].map((r) => (
                     <TouchableOpacity
                       key={r}
                       style={[styles.roleButton, selectedRole === r && styles.roleButtonActive]}

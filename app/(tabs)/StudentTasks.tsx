@@ -95,7 +95,7 @@ export default function StudentTasks() {
   const selectedTaskId = params?.selectedTaskId as string | undefined;
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'pending' | 'live' | 'history'>('pending');
+  const [activeTab, setActiveTab] = useState<'live' | 'history'>('live');
 
   // Main Lists Data
   const [pendingSurveys, setPendingSurveys] = useState<Survey[]>([]);
@@ -158,15 +158,27 @@ export default function StudentTasks() {
 
   const formatDeadlineText = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return `Closes: ${dateStr}`;
-      const options: Intl.DateTimeFormatOptions = {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      };
-      return `Closes: ${date.toLocaleDateString('en-US', options)}`;
+      const deadline = new Date(dateStr);
+      if (isNaN(deadline.getTime())) return `Closes: ${dateStr}`;
+      
+      const now = new Date();
+      const diffMs = deadline.getTime() - now.getTime();
+      
+      if (diffMs < 0) {
+        return `Expired on ${deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      }
+      
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (diffDays > 0) {
+        return `${diffDays}d ${diffHours}h remaining`;
+      } else if (diffHours > 0) {
+        return `${diffHours}h ${diffMinutes}m remaining`;
+      } else {
+        return `${diffMinutes}m remaining`;
+      }
     } catch {
       return `Closes: ${dateStr}`;
     }
@@ -189,6 +201,14 @@ export default function StudentTasks() {
 
   // Start Form Lifecycle
   const handleStartTask = async (survey: Survey) => {
+    if (survey.deadline) {
+      const deadline = new Date(survey.deadline).getTime();
+      if (!isNaN(deadline) && deadline < Date.now()) {
+        Alert.alert('Task Expired', 'The deadline for this task has passed. You can no longer submit it.');
+        return;
+      }
+    }
+
     const surveyId = survey.id || survey._id;
     if (!surveyId) return;
 
@@ -217,7 +237,24 @@ export default function StudentTasks() {
       }
 
       if (!taskData.form_id) {
-        throw new Error('This assignment does not contain an evaluation form.');
+        const mockFormSchema: FormSchema = {
+          _id: 'standard_assignment',
+          title: taskData.title || 'Assignment Submission',
+          description: taskData.description || 'Please submit your response below.',
+          questions: [
+            {
+              _id: 'submission_text',
+              id: 'submission_text',
+              label: 'Your Answer / Solution',
+              type: 'long_text',
+              required: true
+            }
+          ]
+        };
+        setFormSchema(mockFormSchema);
+        setAnswers({ submission_text: '' });
+        setFormLoading(false);
+        return;
       }
 
       // 2. Get form schema
@@ -329,7 +366,7 @@ export default function StudentTasks() {
       ]);
     } catch (err: any) {
       console.error('Failed to submit evaluation:', err);
-      const msg = err.response?.data?.message || 'Failed to submit. Please try again.';
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to submit. Please try again.';
       Alert.alert('Submission Error', msg);
     } finally {
       setSubmitting(false);
@@ -367,31 +404,20 @@ export default function StudentTasks() {
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Evaluations</Text>
-          <Text style={styles.subtitle}>Complete surveys and track academic status</Text>
+          <Text style={styles.title}>Evaluation</Text>
+          <Text style={styles.subtitle}>Complete dynamic course evaluations and view submission history</Text>
         </View>
 
-        {/* Restructured Top Tab Bar (3 tabs) */}
+        {/* Restructured Top Tab Bar (2 tabs) */}
         <View style={styles.tabContainer}>
           <BlurView intensity={25} tint="dark" style={styles.tabBlur}>
-            <TouchableOpacity
-              style={styles.tabButton}
-              onPress={() => setActiveTab('pending')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.tabButtonText, activeTab === 'pending' && styles.tabButtonTextActive]}>
-                Pending Surveys
-              </Text>
-              {activeTab === 'pending' && <View style={styles.activeIndicator} />}
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.tabButton}
               onPress={() => setActiveTab('live')}
               activeOpacity={0.8}
             >
               <Text style={[styles.tabButtonText, activeTab === 'live' && styles.tabButtonTextActive]}>
-                Live Form
+                Evaluation
               </Text>
               {activeTab === 'live' && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
@@ -424,121 +450,34 @@ export default function StudentTasks() {
           </Animatable.View>
         )}
 
-        {/* Tab Panel Renderers */}
-        {activeTab === 'pending' ? (
-          /* TAB 1: PENDING SURVEYS */
-          <FlatList
-            data={pendingSurveys}
-            keyExtractor={(item) => item.id || item._id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.flatListContent,
-              { paddingBottom: insets.bottom + 140 },
-            ]}
-            refreshControl={
+        {/* Scrollable tab contents */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + 140 },
+          ]}
+          refreshControl={
+            activeTab === 'history' ? (
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 tintColor="#6366f1"
                 colors={['#6366f1']}
               />
-            }
-            renderItem={({ item, index }) => {
-              const courseCode = item.target?.course_id?.courseCode || 'GEN-101';
-              const courseName = item.target?.course_id?.name || 'General Module';
-              const instructorName = item.creator_id
-                ? `${item.creator_id.firstName} ${item.creator_id.lastName}`
-                : 'Dr. Unassigned';
-
-              const urgencyColor = getUrgencyColor(item.deadline);
-
-              return (
-                <Animatable.View
-                  animation="fadeInUp"
-                  duration={600}
-                  delay={index * 50}
-                  style={styles.surveyCardContainer}
-                >
-                  <BlurView intensity={60} tint="dark" style={styles.surveyCardBlur}>
-                    {/* Header Row */}
-                    <View style={styles.surveyCardHeader}>
-                      <Text style={styles.surveyTitle} numberOfLines={1}>
-                        {item.title}
-                      </Text>
-                      <View style={[styles.urgencyDot, { backgroundColor: urgencyColor }]} />
-                    </View>
-
-                    {/* Meta Info Row */}
-                    <View style={styles.surveyMetaRow}>
-                      <View style={styles.metaItem}>
-                        <BookOpen size={13} color="#94a3b8" />
-                        <Text style={styles.metaText} numberOfLines={1}>
-                          {courseCode} | {courseName}
-                        </Text>
-                      </View>
-                      <View style={styles.metaItem}>
-                        <User size={13} color="#94a3b8" />
-                        <Text style={styles.metaText} numberOfLines={1}>
-                          {instructorName}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Footer Row */}
-                    <View style={styles.surveyCardFooter}>
-                      <Text style={styles.deadlineLabelText}>
-                        {formatDeadlineText(item.deadline)}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.takeSurveyButton}
-                        onPress={() => handleStartTask(item)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.takeSurveyButtonText}>Take Survey</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </BlurView>
-                </Animatable.View>
-              );
-            }}
-            ListEmptyComponent={
-              !refreshing ? (
-                <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
-                  <CheckCircle2 size={36} color="#34d399" style={styles.emptyIcon} />
-                  <Text style={styles.emptyTitle}>No pending surveys! 🎉</Text>
-                  <Text style={styles.emptyText}>You are all caught up.</Text>
-                </BlurView>
-              ) : null
-            }
-          />
-        ) : (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: insets.bottom + 140 },
-            ]}
-            refreshControl={
-              activeTab === 'history' ? (
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor="#6366f1"
-                  colors={['#6366f1']}
-                />
-              ) : undefined
-            }
-          >
-            {/* TAB 2: LIVE DYNAMIC FORM RENDERER */}
-            {activeTab === 'live' && (
-              <View style={styles.tabPanel}>
+            ) : undefined
+          }
+        >
+          {/* TAB 1: LIVE DYNAMIC FORM RENDERER */}
+          {activeTab === 'live' && (
+            <View style={styles.tabPanel}>
                 {!activeTaskId ? (
                   // State A: No evaluation active
                   <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
                     <ClipboardList size={36} color="#4f46e5" style={styles.emptyIcon} />
                     <Text style={styles.emptyTitle}>No Active Evaluation</Text>
                     <Text style={styles.emptyText}>
-                      Please select an assignment from the 'Pending Surveys' tab to start.
+                      Please select a course evaluation from the 'My Course' screen to start.
                     </Text>
                   </BlurView>
                 ) : formLoading ? (
@@ -584,14 +523,14 @@ export default function StudentTasks() {
                       const currentAnswer = answers[qId];
 
                       return (
-                        <Animatable.View
-                          key={qId}
-                          animation="fadeInUp"
-                          duration={500}
-                          delay={index * 40}
-                          style={styles.questionCard}
-                        >
-                          <BlurView intensity={45} tint="dark" style={styles.questionBlur}>
+                        <View key={qId}>
+                          <Animatable.View
+                            animation="fadeInUp"
+                            duration={500}
+                            delay={index * 40}
+                            style={styles.questionCard}
+                          >
+                            <BlurView intensity={45} tint="dark" style={styles.questionBlur}>
                             {/* Question Label */}
                             <View style={styles.labelRow}>
                               <Text style={styles.questionLabel}>{q.label}</Text>
@@ -708,8 +647,9 @@ export default function StudentTasks() {
                             )}
                           </BlurView>
                         </Animatable.View>
-                      );
-                    })}
+                      </View>
+                    );
+                  })}
 
                     {/* Submission Button */}
                     <Animatable.View animation="fadeInUp" style={styles.submitButtonContainer}>
@@ -744,34 +684,35 @@ export default function StudentTasks() {
               <View style={styles.tabPanel}>
                 {submissions.map((sub, index) => {
                   const subTask = typeof sub.task_id === 'object' ? sub.task_id : null;
-                  const title = subTask?.title || 'Completed Survey';
+                  const title = subTask?.title || 'Completed Task';
                   const submissionDate = formatDeadlineText(sub.createdAt);
 
                   return (
-                    <Animatable.View
-                      key={sub.id || sub._id}
-                      animation="fadeInUp"
-                      duration={600}
-                      delay={index * 50}
-                      style={styles.cardContainer}
-                    >
-                      <BlurView intensity={45} tint="dark" style={styles.cardBlur}>
-                        <View style={styles.completedHeader}>
-                          <View style={styles.completedHeaderLeft}>
-                            <View style={styles.checkWrapper}>
-                              <CheckCircle2 size={16} color="#34d399" />
+                    <View key={sub.id || sub._id}>
+                      <Animatable.View
+                        animation="fadeInUp"
+                        duration={600}
+                        delay={index * 50}
+                        style={styles.cardContainer}
+                      >
+                        <BlurView intensity={45} tint="dark" style={styles.cardBlur}>
+                          <View style={styles.completedHeader}>
+                            <View style={styles.completedHeaderLeft}>
+                              <View style={styles.checkWrapper}>
+                                <CheckCircle2 size={16} color="#34d399" />
+                              </View>
+                              <View style={styles.completedTextContainer}>
+                                <Text style={styles.taskTitle}>{title}</Text>
+                                <Text style={styles.submissionDate}>Submitted: {submissionDate}</Text>
+                              </View>
                             </View>
-                            <View style={styles.completedTextContainer}>
-                              <Text style={styles.taskTitle}>{title}</Text>
-                              <Text style={styles.submissionDate}>Submitted: {submissionDate}</Text>
+                            <View style={styles.statusBadge}>
+                              <Text style={styles.statusBadgeText}>{sub.status}</Text>
                             </View>
                           </View>
-                          <View style={styles.statusBadge}>
-                            <Text style={styles.statusBadgeText}>{sub.status}</Text>
-                          </View>
-                        </View>
-                      </BlurView>
-                    </Animatable.View>
+                        </BlurView>
+                      </Animatable.View>
+                    </View>
                   );
                 })}
 
@@ -779,13 +720,12 @@ export default function StudentTasks() {
                   <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
                     <ClipboardList size={36} color="#4f46e5" style={styles.emptyIcon} />
                     <Text style={styles.emptyTitle}>No Submissions Yet</Text>
-                    <Text style={styles.emptyText}>Completed surveys and evaluations will appear here.</Text>
+                    <Text style={styles.emptyText}>Completed tasks and submissions will appear here.</Text>
                   </BlurView>
                 )}
               </View>
             )}
           </ScrollView>
-        )}
       </View>
     </KeyboardAvoidingView>
   );

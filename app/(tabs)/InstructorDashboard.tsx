@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { ShieldAlert, TrendingUp, Users, ClipboardCheck } from 'lucide-react-native';
+import { ShieldAlert, TrendingUp, Users, ClipboardCheck, User } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
+import { useRouter } from 'expo-router';
 import { theme } from '../../src/theme/theme';
 
 export default function InstructorDashboard() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -20,6 +23,15 @@ export default function InstructorDashboard() {
             <Text style={styles.welcomeText}>Welcome back,</Text>
             <Text style={styles.title}>Instructor Panel</Text>
           </View>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={() => router.push('/ProfileScreen')}
+            activeOpacity={0.7}
+          >
+            <BlurView intensity={30} tint="dark" style={styles.profileBlur}>
+              <User size={20} color="#fff" />
+            </BlurView>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Stats Bento Row */}
@@ -66,7 +78,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  profileButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  profileBlur: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   welcomeText: {
     fontSize: 14,

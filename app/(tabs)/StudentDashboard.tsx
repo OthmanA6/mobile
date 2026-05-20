@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Sparkles,
   AlertTriangle,
+  User,
+  FileText,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { useRouter } from 'expo-router';
@@ -50,7 +52,7 @@ export default function StudentDashboard() {
 
   // State
   const [userName, setUserName] = useState('Student');
-  const [metrics, setMetrics] = useState<{ pending: number; completed: number; courses: number } | null>(null);
+  const [metrics, setMetrics] = useState<{ pending: number; completed: number; courses: number; forms: number } | null>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [urgentTasks, setUrgentTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,11 +65,12 @@ export default function StudentDashboard() {
     }
     setError(false);
     try {
-      const [coursesRes, tasksRes, submissionsRes, profileRes] = await Promise.all([
+      const [coursesRes, tasksRes, submissionsRes, profileRes, formsRes] = await Promise.all([
         apiClient.get('/courses'),
         apiClient.get('/tasks'),
         apiClient.get('/task-submissions/my-submissions'),
         authService.getProfile(),
+        apiClient.get('/v1/form').catch(() => ({ data: { data: [] } })), // Catch form errors gracefully
       ]);
 
       const coursesList = coursesRes.data?.data?.courses || [];
@@ -95,10 +98,18 @@ export default function StudentDashboard() {
         pending: pending.length,
         completed: submissionsList.length,
         courses: coursesList.length,
+        forms: (formsRes.data?.data || []).length,
       });
 
-      // Sort pending tasks by deadline for urgency, and take top 3
-      const sortedUrgent = [...pending]
+      // Filter out tasks that have passed their deadline for the Action Required list
+      const now = Date.now();
+      const activePending = pending.filter((t: any) => {
+        const deadline = new Date(t.deadline).getTime();
+        return isNaN(deadline) || deadline >= now;
+      });
+
+      // Sort active pending tasks by deadline for urgency, and take top 3
+      const sortedUrgent = [...activePending]
         .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
         .slice(0, 3);
 
@@ -219,16 +230,28 @@ export default function StudentDashboard() {
             <Text style={styles.greetingSub}>Welcome back,</Text>
             <Text style={styles.greetingMain}>{userName} 👋</Text>
           </View>
-          <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={handleNotificationPress}
-            activeOpacity={0.7}
-          >
-            <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
-              <Bell size={20} color="#fff" />
-              {metrics && metrics.pending > 0 && <View style={styles.bellBadge} />}
-            </BlurView>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={() => router.push('/ProfileScreen')}
+              activeOpacity={0.7}
+            >
+              <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
+                <User size={20} color="#fff" />
+              </BlurView>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={handleNotificationPress}
+              activeOpacity={0.7}
+            >
+              <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
+                <Bell size={20} color="#fff" />
+                {metrics && metrics.pending > 0 && <View style={styles.bellBadge} />}
+              </BlurView>
+            </TouchableOpacity>
+          </View>
         </Animatable.View>
 
         {/* Error Banner */}
@@ -262,11 +285,11 @@ export default function StudentDashboard() {
                   <Text style={styles.badgeText}>INSIGHTO ACTIVE</Text>
                 </View>
                 <Text style={styles.welcomeCardTitle}>
-                  {metrics && metrics.pending > 0 ? 'Surveys awaiting reply' : 'All caught up!'}
+                  {metrics && metrics.forms > 0 ? 'Surveys awaiting reply' : 'All caught up!'}
                 </Text>
                 <Text style={styles.welcomeCardDesc}>
-                  {metrics && metrics.pending > 0
-                    ? `You have ${metrics.pending} pending surveys waiting for your response.`
+                  {metrics && metrics.forms > 0
+                    ? `You have ${metrics.forms} pending surveys waiting for your response.`
                     : 'Great job! You have submitted all active feedback forms.'}
                 </Text>
               </View>
@@ -285,43 +308,64 @@ export default function StudentDashboard() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.metricsContainer}
         >
-          {/* Card 1: Pending */}
+          {/* Card 1: Pending Tasks */}
           <Animatable.View animation="fadeInRight" duration={600} delay={100} style={styles.metricCard}>
-            <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
-              <View style={[styles.iconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-                <Clock size={20} color="#f87171" />
-              </View>
-              <View>
-                <Text style={styles.metricValue}>{metrics?.pending ?? 0}</Text>
-                <Text style={styles.metricLabel}>Pending Tasks</Text>
-              </View>
-            </BlurView>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentTasks')} style={{ flex: 1 }}>
+              <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
+                <View style={[styles.iconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+                  <Clock size={20} color="#f87171" />
+                </View>
+                <View>
+                  <Text style={styles.metricValue}>{metrics?.pending ?? 0}</Text>
+                  <Text style={styles.metricLabel}>Pending Tasks</Text>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
           </Animatable.View>
 
-          {/* Card 2: Enrolled Courses */}
+          {/* Card 2: Forms & Surveys */}
+          <Animatable.View animation="fadeInRight" duration={600} delay={150} style={styles.metricCard}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentForms')} style={{ flex: 1 }}>
+              <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
+                <View style={[styles.iconWrapper, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
+                  <FileText size={20} color="#f472b6" />
+                </View>
+                <View>
+                  <Text style={styles.metricValue}>{metrics?.forms ?? 0}</Text>
+                  <Text style={styles.metricLabel}>Forms & Surveys</Text>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
+          </Animatable.View>
+
+          {/* Card 3: Enrolled Courses */}
           <Animatable.View animation="fadeInRight" duration={600} delay={200} style={styles.metricCard}>
-            <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
-              <View style={[styles.iconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                <BookOpen size={20} color="#cfbcff" />
-              </View>
-              <View>
-                <Text style={styles.metricValue}>{metrics?.courses ?? 0}</Text>
-                <Text style={styles.metricLabel}>My Courses</Text>
-              </View>
-            </BlurView>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentModules')} style={{ flex: 1 }}>
+              <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
+                <View style={[styles.iconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                  <BookOpen size={20} color="#cfbcff" />
+                </View>
+                <View>
+                  <Text style={styles.metricValue}>{metrics?.courses ?? 0}</Text>
+                  <Text style={styles.metricLabel}>My Courses</Text>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
           </Animatable.View>
 
-          {/* Card 3: Completed */}
+          {/* Card 4: Completed */}
           <Animatable.View animation="fadeInRight" duration={600} delay={300} style={styles.metricCard}>
-            <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
-              <View style={[styles.iconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                <CheckCircle2 size={20} color="#34d399" />
-              </View>
-              <View>
-                <Text style={styles.metricValue}>{metrics?.completed ?? 0}</Text>
-                <Text style={styles.metricLabel}>Completed</Text>
-              </View>
-            </BlurView>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentTasks')} style={{ flex: 1 }}>
+              <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
+                <View style={[styles.iconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+                  <CheckCircle2 size={20} color="#34d399" />
+                </View>
+                <View>
+                  <Text style={styles.metricValue}>{metrics?.completed ?? 0}</Text>
+                  <Text style={styles.metricLabel}>Completed</Text>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
           </Animatable.View>
         </ScrollView>
 
@@ -420,6 +464,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
   },
   greetingSub: {
     fontSize: 14,

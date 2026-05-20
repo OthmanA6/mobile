@@ -184,7 +184,7 @@ export default function FormRendererView() {
       ]);
     } catch (err: any) {
       console.error('Failed to submit evaluation:', err);
-      const msg = err.response?.data?.message || 'Failed to submit evaluation. Please try again.';
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to submit evaluation. Please try again.';
       Alert.alert('Submission Error', msg);
     } finally {
       setSubmitting(false);

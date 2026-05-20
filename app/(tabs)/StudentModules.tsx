@@ -85,9 +85,13 @@ export default function StudentModules() {
   });
 
   const handleCardPress = (course: Course) => {
-    const instructorName = course.instructor
-      ? `${course.instructor.firstName} ${course.instructor.lastName}`
-      : 'Unassigned Instructor';
+    let instructorName = 'Unassigned Instructor';
+    const instObj = course.instructorId as any;
+    if (instObj && typeof instObj === 'object') {
+      instructorName = `${instObj.firstName || ''} ${instObj.lastName || ''}`.trim();
+    } else if (course.instructor) {
+      instructorName = `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim();
+    }
 
     router.push({
       pathname: '/ModuleDetailView',
@@ -110,7 +114,7 @@ export default function StudentModules() {
         />
         <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Syncing Modules...</Text>
+        <Text style={styles.loadingText}>Syncing Courses...</Text>
       </View>
     );
   }
@@ -131,7 +135,7 @@ export default function StudentModules() {
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>My Modules</Text>
+          <Text style={styles.title}>My Course</Text>
           <Text style={styles.subtitle}>Track your enrolled courses and instructors</Text>
         </View>
 
@@ -154,7 +158,7 @@ export default function StudentModules() {
             <BlurView intensity={40} tint="dark" style={styles.errorBlur}>
               <View style={styles.errorLeft}>
                 <AlertTriangle size={18} color="#f87171" style={styles.errorIcon} />
-                <Text style={styles.errorText}>Failed to sync modules.</Text>
+                <Text style={styles.errorText}>Failed to sync courses.</Text>
               </View>
               <TouchableOpacity style={styles.retryButton} onPress={() => fetchModules(true)}>
                 <Text style={styles.retryButtonText}>Retry</Text>
@@ -181,9 +185,13 @@ export default function StudentModules() {
             />
           }
           renderItem={({ item, index }) => {
-            const instructorName = item.instructor
-              ? `${item.instructor.firstName} ${item.instructor.lastName}`
-              : 'Unassigned Instructor';
+            let instructorName = 'Unassigned Instructor';
+            const instObj = item.instructorId as any;
+            if (instObj && typeof instObj === 'object') {
+              instructorName = `${instObj.firstName || ''} ${instObj.lastName || ''}`.trim();
+            } else if (item.instructor) {
+              instructorName = `${item.instructor.firstName || ''} ${item.instructor.lastName || ''}`.trim();
+            }
 
             return (
               <Animatable.View
@@ -225,11 +233,11 @@ export default function StudentModules() {
             !loading ? (
               <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
                 <BookOpen size={36} color="#4f46e5" style={styles.emptyIcon} />
-                <Text style={styles.emptyTitle}>No Modules Found</Text>
+                <Text style={styles.emptyTitle}>No Courses Found</Text>
                 <Text style={styles.emptyText}>
                   {searchTerm
                     ? 'No courses match your search criteria.'
-                    : 'You are not currently enrolled in any academic modules.'}
+                    : 'You are not currently enrolled in any academic courses.'}
                 </Text>
               </BlurView>
             ) : null

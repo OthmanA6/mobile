@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   bottomGlow: {
     bottom: -100,
     left: -100,
-    backgroundColor: theme.colors.purple,
+    backgroundColor: theme.colors.primary,
   },
   logoContainer: {
     alignItems: 'center',

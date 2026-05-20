@@ -53,9 +53,18 @@ export default function LoginScreen() {
     try {
       const response = await authService.login(data);
       if (response.token) {
-        await AsyncStorage.setItem('userToken', response.token);
-        
         const userRole = response.user?.role || 'STUDENT';
+        
+        if (userRole.toUpperCase() === 'ADMIN') {
+          Alert.alert(
+            'Access Denied',
+            'Admins are not allowed to log in via the mobile application.'
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        await AsyncStorage.setItem('userToken', response.token);
         await AsyncStorage.setItem('userRole', userRole);
 
         if (userRole.toUpperCase() === 'INSTRUCTOR') {
@@ -363,5 +372,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: theme.colors.onSurfaceVariant,
-  }
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
+  },
 });

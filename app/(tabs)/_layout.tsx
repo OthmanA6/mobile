@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Home, BookOpen, ClipboardList, User } from 'lucide-react-native';
+import { Home, BookOpen, ClipboardList, User, FileText } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
@@ -72,6 +72,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <ClipboardList size={24} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="StudentForms"
+        options={{
+          href: isStudent ? undefined : null,
+          tabBarIcon: ({ color }) => <FileText size={24} color={color} />,
+        }}
+      />
 
       {/* Instructor Screens */}
       <Tabs.Screen
@@ -100,7 +107,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="ProfileScreen"
         options={{
-          tabBarIcon: ({ color }) => <User size={24} color={color} />,
+          href: null,
         }}
       />
     </Tabs>

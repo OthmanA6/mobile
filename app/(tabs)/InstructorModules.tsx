@@ -15,7 +15,7 @@ export default function InstructorModules() {
       />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Assigned Modules</Text>
+          <Text style={styles.title}>Assigned Courses</Text>
         </View>
 
         <Animatable.View animation="fadeInUp" duration={800} style={styles.infoCard}>
