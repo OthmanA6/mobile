@@ -15,15 +15,22 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import {
   ArrowLeft,
   CheckCircle2,
   AlertTriangle,
   Info,
   Check,
+  Paperclip,
+  Image as ImageIcon,
+  Trash2,
+  FileText,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../src/api/client';
+import CustomAlert, { AlertButton } from '../components/CustomAlert';
 
 interface Question {
   _id: string;
@@ -58,6 +65,157 @@ export default function FormRendererView() {
   const [form, setForm] = useState<FormSchema | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
 
+  // Attachments State
+  const [attachments, setAttachments] = useState<{ url: string; fileName: string; size: number }[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    buttons?: AlertButton[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info' = 'info',
+    buttons?: AlertButton[]
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      buttons,
+    });
+  };
+
+  // Document picking logic
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      await uploadFile(asset.uri, asset.name, asset.mimeType || 'application/octet-stream', asset.size || 0);
+    } catch (err) {
+      console.error('Document picking failed:', err);
+      showAlert('Error', 'Failed to select document.', 'error');
+    }
+  };
+
+  // Image picking logic
+  const handlePickImage = async (useCamera = false) => {
+    try {
+      let result;
+      if (useCamera) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          showAlert('Permission Denied', 'Camera access is required to take photos.', 'warning');
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.8,
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          showAlert('Permission Denied', 'Photo library access is required to select photos.', 'warning');
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.8,
+        });
+      }
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const name = asset.fileName || `photo_${Date.now()}.jpg`;
+      const mime = asset.mimeType || 'image/jpeg';
+      const size = asset.fileSize || 0;
+
+      await uploadFile(asset.uri, name, mime, size);
+    } catch (err) {
+      console.error('Image picking failed:', err);
+      showAlert('Error', 'Failed to pick image.', 'error');
+    }
+  };
+
+  // Upload file to backend
+  const uploadFile = async (uri: string, name: string, type: string, size: number) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+        name: name,
+        type: type,
+      } as any);
+
+      const response = await apiClient.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const uploadedData = response.data?.data;
+      if (uploadedData && uploadedData.url) {
+        const attachment = {
+          url: uploadedData.url,
+          fileName: name,
+          size: size || uploadedData.size || 0,
+        };
+        setAttachments((prev) => [...prev, attachment]);
+        showAlert('Uploaded', 'File attached successfully.', 'success');
+      } else {
+        throw new Error('Upload response failed.');
+      }
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      const msg = err.response?.data?.message || 'Server error uploading file.';
+      showAlert('Upload Error', msg, 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSelectAttachmentType = () => {
+    showAlert(
+      'Attach File / Image',
+      'Choose how you want to attach your solution file:',
+      'info',
+      [
+        { text: 'Take a Photo', onPress: () => handlePickImage(true) },
+        { text: 'Choose from Gallery', onPress: () => handlePickImage(false) },
+        { text: 'Upload Document (PDF, doc)', onPress: handlePickDocument },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const handleRemoveAttachment = (indexToRemove: number) => {
+    setAttachments((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const fetchFormSchema = async () => {
     setLoading(true);
     setError(false);
@@ -71,7 +229,24 @@ export default function FormRendererView() {
       }
 
       if (!task.form_id) {
-        throw new Error('This task does not have an associated evaluation form.');
+        // Fallback for standard tasks without an associated evaluation form
+        const mockForm: FormSchema = {
+          _id: 'standard_assignment',
+          title: task.title || 'Assignment Submission',
+          description: task.description || 'Please submit your response/solution below.',
+          questions: [
+            {
+              _id: 'submission_text',
+              id: 'submission_text',
+              label: 'Your Answer / Solution (Text)',
+              type: 'long_text',
+              required: false,
+            }
+          ]
+        };
+        setForm(mockForm);
+        setAnswers({ submission_text: '' });
+        return;
       }
 
       // 2. Get form schema by form_id
@@ -156,9 +331,20 @@ export default function FormRendererView() {
     });
 
     if (unansweredRequired.length > 0) {
-      Alert.alert(
+      showAlert(
         'Required Fields',
-        'Please answer all required questions before submitting.'
+        'Please answer all required questions before submitting.',
+        'warning'
+      );
+      return;
+    }
+
+    // Custom check for standard assignment tasks: either text answers OR attachments must be provided
+    if (form._id === 'standard_assignment' && !answers['submission_text']?.trim() && attachments.length === 0) {
+      showAlert(
+        'Empty Submission',
+        'Please type a response or upload a file/image to submit your solution.',
+        'warning'
       );
       return;
     }
@@ -166,14 +352,21 @@ export default function FormRendererView() {
     setSubmitting(true);
     try {
       // Serialize answers as content
+      let finalContent = '';
+      if (form._id === 'standard_assignment') {
+        finalContent = answers['submission_text'] || '';
+      } else {
+        finalContent = JSON.stringify(answers);
+      }
+
       const payload = {
-        content: JSON.stringify(answers),
-        attachments: [],
+        content: finalContent,
+        attachments: attachments,
       };
 
       await apiClient.post(`/task-submissions/task/${taskId}`, payload);
 
-      Alert.alert('Success', 'Your evaluation has been submitted successfully!', [
+      showAlert('Success', 'Your evaluation has been submitted successfully!', 'success', [
         {
           text: 'OK',
           onPress: () => {
@@ -185,7 +378,7 @@ export default function FormRendererView() {
     } catch (err: any) {
       console.error('Failed to submit evaluation:', err);
       const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to submit evaluation. Please try again.';
-      Alert.alert('Submission Error', msg);
+      showAlert('Submission Error', msg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -423,6 +616,66 @@ export default function FormRendererView() {
           );
         })}
 
+        {/* Solution Attachments Card */}
+        <Animatable.View animation="fadeInUp" duration={600} delay={150} style={styles.questionCard}>
+          <BlurView intensity={45} tint="dark" style={styles.questionBlur}>
+            <View style={styles.labelRow}>
+              <Paperclip size={18} color="#a5b4fc" style={{ marginRight: 8 }} />
+              <Text style={styles.questionLabel}>Attachments / Supporting Files</Text>
+            </View>
+            <Text style={styles.attachmentsSubtitle}>
+              Upload images, code files, PDFs, or take a photo of your handwritten solution.
+            </Text>
+
+            {/* List of uploaded files */}
+            {attachments.length > 0 && (
+              <View style={styles.attachmentsList}>
+                {attachments.map((file, index) => (
+                  <View key={index} style={styles.attachmentItem}>
+                    <View style={styles.attachmentLeft}>
+                      <FileText size={20} color="#6366f1" />
+                      <View style={styles.attachmentTextContainer}>
+                        <Text style={styles.attachmentName} numberOfLines={1}>
+                          {file.fileName || 'Attachment'}
+                        </Text>
+                        <Text style={styles.attachmentSize}>
+                          {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Attached'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveAttachment(index)}
+                      style={styles.removeButton}
+                    >
+                      <Trash2 size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Upload buttons */}
+            <TouchableOpacity
+              onPress={handleSelectAttachmentType}
+              disabled={uploading}
+              style={styles.uploadTriggerButton}
+              activeOpacity={0.8}
+            >
+              {uploading ? (
+                <View style={styles.uploadingRow}>
+                  <ActivityIndicator size="small" color="#6366f1" />
+                  <Text style={styles.uploadingText}>Uploading file...</Text>
+                </View>
+              ) : (
+                <View style={styles.uploadTriggerContent}>
+                  <ImageIcon size={20} color="#6366f1" style={{ marginRight: 8 }} />
+                  <Text style={styles.uploadTriggerText}>Attach Image or Document</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </BlurView>
+        </Animatable.View>
+
         {/* Submit Button */}
         <Animatable.View animation="fadeInUp" delay={200} style={styles.submitButtonContainer}>
           <TouchableOpacity
@@ -447,6 +700,10 @@ export default function FormRendererView() {
           </TouchableOpacity>
         </Animatable.View>
       </ScrollView>
+      <CustomAlert
+        {...alertConfig}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -727,6 +984,81 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 15,
+    fontWeight: '800',
+  },
+  attachmentsSubtitle: {
+    color: '#94a3b8',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  attachmentsList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  attachmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  attachmentLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  attachmentTextContainer: {
+    flex: 1,
+  },
+  attachmentName: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  attachmentSize: {
+    color: '#64748b',
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  removeButton: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  uploadTriggerButton: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    borderRadius: 12,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.02)',
+  },
+  uploadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  uploadingText: {
+    color: '#6366f1',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  uploadTriggerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  uploadTriggerText: {
+    color: '#6366f1',
+    fontSize: 13,
     fontWeight: '800',
   },
 });

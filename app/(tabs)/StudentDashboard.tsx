@@ -31,6 +31,7 @@ import { useRouter } from 'expo-router';
 import { theme } from '../../src/theme/theme';
 import apiClient from '../../src/api/client';
 import { authService } from '../../src/api/auth';
+import CustomAlert, { AlertButton } from '../../components/CustomAlert';
 
 const { width } = Dimensions.get('window');
 
@@ -58,6 +59,35 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    buttons?: AlertButton[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info' = 'info',
+    buttons?: AlertButton[]
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      buttons,
+    });
+  };
 
   const fetchDashboardData = async (showFullScreenLoading = true) => {
     if (showFullScreenLoading) {
@@ -157,17 +187,23 @@ export default function StudentDashboard() {
   };
 
   const handleStartTask = (task: Task) => {
-    Alert.alert(
+    showAlert(
       'Start Evaluation',
       `Would you like to open "${task.title}" to submit your evaluation?`,
+      'info',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Open',
           onPress: () => {
+            const cName = getCourseName(task.target?.course_id);
             router.push({
-              pathname: '/(tabs)/StudentTasks',
-              params: { selectedTaskId: task.id || task._id },
+              pathname: '/FormRendererView',
+              params: {
+                taskId: task.id || task._id,
+                taskTitle: task.title,
+                courseName: cName,
+              },
             });
           },
         },
@@ -176,7 +212,7 @@ export default function StudentDashboard() {
   };
 
   const handleNotificationPress = () => {
-    Alert.alert('Notifications', 'No new notifications');
+    showAlert('Notifications', 'No new notifications', 'info');
   };
 
   if (loading) {
@@ -426,6 +462,10 @@ export default function StudentDashboard() {
           )}
         </View>
       </ScrollView>
+      <CustomAlert
+        {...alertConfig}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }

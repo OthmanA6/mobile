@@ -16,6 +16,7 @@ import { BlurView } from 'expo-blur';
 import { ArrowLeft, BookOpen, User, Building2, ClipboardList, ChevronRight } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../src/api/client';
+import CustomAlert, { AlertButton } from '../components/CustomAlert';
 
 interface CoursePopulated {
   _id: string;
@@ -51,6 +52,35 @@ export default function ModuleDetailView() {
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [tasksError, setTasksError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    buttons?: AlertButton[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info' = 'info',
+    buttons?: AlertButton[]
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      buttons,
+    });
+  };
 
   const fetchCourseTasks = async (showLoading = true) => {
     if (showLoading) setLoadingTasks(true);
@@ -94,14 +124,19 @@ export default function ModuleDetailView() {
     if (task.deadline) {
       const deadline = new Date(task.deadline).getTime();
       if (!isNaN(deadline) && deadline < Date.now()) {
-        Alert.alert('Task Expired', 'The deadline for this task has passed. You can no longer submit it.');
+        showAlert('Task Expired', 'The deadline for this task has passed. You can no longer submit it.', 'error');
         return;
       }
     }
     const taskId = task.id || task._id;
+    const cName = typeof task.target?.course_id === 'object' ? (task.target.course_id.name || 'Course Assignment') : 'Course Assignment';
     router.push({
-      pathname: '/(tabs)/StudentTasks',
-      params: { selectedTaskId: taskId }
+      pathname: '/FormRendererView',
+      params: {
+        taskId: taskId,
+        taskTitle: task.title,
+        courseName: cName,
+      }
     });
   };
 
@@ -263,6 +298,10 @@ export default function ModuleDetailView() {
           </BlurView>
         </Animatable.View>
       </ScrollView>
+      <CustomAlert
+        {...alertConfig}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
