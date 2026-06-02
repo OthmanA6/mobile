@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -28,7 +28,7 @@ interface DashboardData {
   }[];
 }
 
-export default function InstructorDashboard() {
+export default function InstructorHome() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,7 @@ export default function InstructorDashboard() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={[]} // Using FlatList just for the scroll structure with RefreshControl
+        data={[]}
         renderItem={null}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F59E0B" />}
         contentContainerStyle={styles.scrollContent}
@@ -115,7 +115,10 @@ export default function InstructorDashboard() {
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.horizontalList}
                 renderItem={({ item }) => (
-                  <View style={styles.moduleCard}>
+                  <TouchableOpacity 
+                    style={styles.moduleCard}
+                    onPress={() => router.push({ pathname: '/(tabs)/InstructorCourses', params: { courseId: item._id } })}
+                  >
                     <BlurView intensity={20} tint="dark" style={styles.moduleBlurInner}>
                       <Text style={styles.moduleCode}>{item.courseCode}</Text>
                       <Text style={styles.moduleName} numberOfLines={1}>{item.name}</Text>
@@ -124,7 +127,7 @@ export default function InstructorDashboard() {
                         <Text style={styles.moduleStudents}>{item.enrolledCount} Enrolled</Text>
                       </View>
                     </BlurView>
-                  </View>
+                  </TouchableOpacity>
                 )}
               />
             ) : (
@@ -149,9 +152,9 @@ export default function InstructorDashboard() {
                     </View>
                     <TouchableOpacity 
                       style={styles.reviewButton}
-                      onPress={() => router.push('/InstructorEvaluations')}
+                      onPress={() => router.push('/(tabs)/StudentDirectory')} // Fallback page redirect
                     >
-                      <Text style={styles.reviewButtonText}>Review</Text>
+                      <Text style={styles.reviewButtonText}>View</Text>
                     </TouchableOpacity>
                   </BlurView>
                 </View>
@@ -169,7 +172,7 @@ export default function InstructorDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120', // Deep Navy
+    backgroundColor: '#0B1120',
   },
   centered: {
     justifyContent: 'center',
@@ -178,7 +181,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 20,
-    paddingBottom: 100, // For bottom tab spacing
+    paddingBottom: 110,
     paddingHorizontal: 20,
   },
   metricsGrid: {
@@ -194,7 +197,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.15)', // Amber hint
+    borderColor: 'rgba(245, 158, 11, 0.15)',
   },
   blurInner: {
     flex: 1,

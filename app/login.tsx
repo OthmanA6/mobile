@@ -54,7 +54,7 @@ export default function LoginScreen() {
       const response = await authService.login(data);
       if (response.token) {
         const userRole = response.user?.role || 'STUDENT';
-        
+
         if (userRole.toUpperCase() === 'ADMIN') {
           Alert.alert(
             'Access Denied',
@@ -68,7 +68,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userRole', userRole);
 
         if (userRole.toUpperCase() === 'INSTRUCTOR') {
-          router.replace('/(tabs)/InstructorDashboard');
+          router.replace('/(tabs)/InstructorHome');
         } else {
           router.replace('/(tabs)/StudentDashboard');
         }

@@ -32,8 +32,8 @@ import {
 import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authService } from '../../src/api/auth';
-import { theme } from '../../src/theme/theme';
+import { authService } from '../src/api/auth';
+import { theme } from '../src/theme/theme';
 
 const { width } = Dimensions.get('window');
 
