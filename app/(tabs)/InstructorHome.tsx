@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar } from 'lucide-react-native';
+import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar, AlertTriangle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 import apiClient from '../../src/api/client';
 
 interface DashboardData {
@@ -29,6 +32,7 @@ interface DashboardData {
 }
 
 export default function InstructorHome() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,8 +64,14 @@ export default function InstructorHome() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#F59E0B" />
+      <View style={styles.loadingContainer}>
+        <LinearGradient
+          colors={['#090514', '#0c0a1a', '#02010a']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text style={styles.loadingText}>Syncing Dashboard...</Text>
       </View>
     );
   }
@@ -80,7 +90,7 @@ export default function InstructorHome() {
 
   const renderMetricCard = (title: string, value: string | number, icon: React.ReactNode) => (
     <View style={styles.metricCard}>
-      <BlurView intensity={20} tint="dark" style={styles.blurInner}>
+      <BlurView intensity={50} tint="dark" style={styles.blurInner}>
         <View style={styles.metricIcon}>{icon}</View>
         <Text style={styles.metricValue}>{value}</Text>
         <Text style={styles.metricTitle}>{title}</Text>
@@ -90,19 +100,52 @@ export default function InstructorHome() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={[]}
-        renderItem={null}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F59E0B" />}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={
-          <>
-            {/* Metrics 2x2 Grid */}
-            <View style={styles.metricsGrid}>
-              {renderMetricCard('Total Modules', data?.metrics.totalModules || 0, <BookOpen size={20} color="#F59E0B" />)}
-              {renderMetricCard('Total Students', data?.metrics.totalStudents || 0, <Users size={20} color="#F59E0B" />)}
-              {renderMetricCard('Avg Performance', `${data?.metrics.avgPerformance || 0}%`, <TrendingUp size={20} color="#F59E0B" />)}
-              {renderMetricCard('Pending Reviews', data?.metrics.pendingReviews || 0, <ClipboardCheck size={20} color="#F59E0B" />)}
+      {/* Dark Premium Gradient Background */}
+      <LinearGradient
+        colors={['#090514', '#0c0a1a', '#02010a']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Ambient background glows */}
+      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
+      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]} />
+
+      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+        <FlatList
+          data={[]}
+          renderItem={null}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 140 }]}
+          ListHeaderComponent={
+            <>
+              {/* Header */}
+              <View style={styles.header}>
+                <Text style={styles.title}>Command Center</Text>
+                <Text style={styles.subtitle}>Overview and active module tasks</Text>
+              </View>
+
+              {error && (
+                <Animatable.View animation="fadeInDown" style={styles.errorContainer}>
+                  <BlurView intensity={40} tint="dark" style={styles.errorBlur}>
+                    <View style={styles.errorLeft}>
+                      <AlertTriangle size={18} color="#f87171" style={styles.errorIcon} />
+                      <Text style={styles.errorBannerText}>{error}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.retryBannerButton} onPress={fetchDashboard}>
+                      <Text style={styles.retryBannerText}>Retry</Text>
+                    </TouchableOpacity>
+                  </BlurView>
+                </Animatable.View>
+              )}
+
+              {/* Metrics 2x2 Grid */}
+              <View style={styles.metricsGrid}>
+                {renderMetricCard('Total Modules', data?.metrics.totalModules || 0, <BookOpen size={20} color="#cfbcff" />)}
+                {renderMetricCard('Total Students', data?.metrics.totalStudents || 0, <Users size={20} color="#cfbcff" />)}
+                {renderMetricCard('Avg Performance', `${data?.metrics.avgPerformance || 0}%`, <TrendingUp size={20} color="#cfbcff" />)}
+                {renderMetricCard('Pending Reviews', data?.metrics.pendingReviews || 0, <ClipboardCheck size={20} color="#cfbcff" />)}
             </View>
 
             {/* Recent Modules */}
@@ -119,7 +162,7 @@ export default function InstructorHome() {
                     style={styles.moduleCard}
                     onPress={() => router.push({ pathname: '/(tabs)/InstructorCourses', params: { courseId: item._id } })}
                   >
-                    <BlurView intensity={20} tint="dark" style={styles.moduleBlurInner}>
+                    <BlurView intensity={45} tint="dark" style={styles.moduleBlurInner}>
                       <Text style={styles.moduleCode}>{item.courseCode}</Text>
                       <Text style={styles.moduleName} numberOfLines={1}>{item.name}</Text>
                       <View style={styles.moduleFooter}>
@@ -139,7 +182,7 @@ export default function InstructorHome() {
             {data?.activeTasks && data.activeTasks.length > 0 ? (
               data.activeTasks.map((task) => (
                 <View key={task._id} style={styles.taskCard}>
-                  <BlurView intensity={20} tint="dark" style={styles.taskBlurInner}>
+                  <BlurView intensity={45} tint="dark" style={styles.taskBlurInner}>
                     <View style={styles.taskInfo}>
                       <Text style={styles.taskCourse}>{task.courseId?.courseCode}</Text>
                       <Text style={styles.taskTitle}>{task.title}</Text>
@@ -165,6 +208,7 @@ export default function InstructorHome() {
           </>
         }
       />
+      </View>
     </View>
   );
 }
@@ -172,17 +216,91 @@ export default function InstructorHome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120',
+    backgroundColor: '#02010a',
   },
-  centered: {
+  glowOrb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.8,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#02010a',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+  },
+  loadingText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: 16,
+    textTransform: 'uppercase',
+  },
+  mainWrapper: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   scrollContent: {
-    paddingTop: 20,
-    paddingBottom: 110,
-    paddingHorizontal: 20,
+    paddingBottom: 28,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+    marginBottom: 20,
+  },
+  errorBlur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  errorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  errorIcon: {
+    marginRight: 10,
+  },
+  errorBannerText: {
+    color: '#fca5a5',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  retryBannerButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  retryBannerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -197,7 +315,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   blurInner: {
     flex: 1,
@@ -244,7 +362,7 @@ const styles = StyleSheet.create({
   },
   moduleCode: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: '#a5b4fc',
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -283,7 +401,7 @@ const styles = StyleSheet.create({
   },
   taskCourse: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: '#a5b4fc',
     fontWeight: '700',
   },
   taskTitle: {
@@ -303,15 +421,15 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   reviewButton: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: '#6366f1',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 12,
   },
   reviewButtonText: {
-    color: '#F59E0B',
+    color: '#a5b4fc',
     fontWeight: '700',
     fontSize: 14,
   },

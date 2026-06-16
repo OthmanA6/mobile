@@ -38,11 +38,11 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: isInstructor, // Labels shown for instructor, hidden for student
-        tabBarStyle: isInstructor ? styles.tabBarWithLabels : styles.tabBar,
-        tabBarActiveTintColor: isInstructor ? '#F59E0B' : '#6366f1',
+        tabBarShowLabel: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarItemStyle: isInstructor ? styles.tabBarItemWithLabel : styles.tabBarItem,
+        tabBarItemStyle: styles.tabBarItem,
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarBackground: () => (
           <View style={styles.blurContainer}>
@@ -56,28 +56,32 @@ export default function TabLayout() {
         name="StudentDashboard"
         options={{
           href: isStudent ? undefined : null,
-          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="StudentModules"
         options={{
           href: isStudent ? undefined : null,
-          tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
+          tabBarLabel: 'Courses',
+          tabBarIcon: ({ color }) => <BookOpen size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="StudentTasks"
         options={{
           href: isStudent ? undefined : null,
-          tabBarIcon: ({ color }) => <ClipboardList size={24} color={color} />,
+          tabBarLabel: 'Tasks',
+          tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="StudentForms"
         options={{
           href: isStudent ? undefined : null,
-          tabBarIcon: ({ color }) => <FileText size={24} color={color} />,
+          tabBarLabel: 'Surveys',
+          tabBarIcon: ({ color }) => <FileText size={22} color={color} />,
         }}
       />
 
@@ -106,15 +110,7 @@ export default function TabLayout() {
         name="InstructorHome"
         options={{
           href: isInstructor ? undefined : null,
-          headerShown: isInstructor,
-          headerTitle: 'Command Center',
-          headerStyle: { backgroundColor: '#0B1120', borderBottomWidth: 0, shadowColor: 'transparent', elevation: 0 },
-          headerTintColor: '#F59E0B',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/ProfileScreen')} style={{ marginRight: 20 }}>
-              <User size={24} color="#F59E0B" />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
           tabBarLabel: 'Home',
           tabBarIcon: ({ color }) => <LayoutDashboard size={22} color={color} />,
         }}
@@ -123,15 +119,7 @@ export default function TabLayout() {
         name="InstructorCourses"
         options={{
           href: isInstructor ? undefined : null,
-          headerShown: isInstructor,
-          headerTitle: 'My Courses',
-          headerStyle: { backgroundColor: '#0B1120', borderBottomWidth: 0, shadowColor: 'transparent', elevation: 0 },
-          headerTintColor: '#F59E0B',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/ProfileScreen')} style={{ marginRight: 20 }}>
-              <User size={24} color="#F59E0B" />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
           tabBarLabel: 'My Courses',
           tabBarIcon: ({ color }) => <BookOpen size={22} color={color} />,
         }}
@@ -140,15 +128,7 @@ export default function TabLayout() {
         name="StudentDirectory"
         options={{
           href: isInstructor ? undefined : null,
-          headerShown: isInstructor,
-          headerTitle: 'Student Directory',
-          headerStyle: { backgroundColor: '#0B1120', borderBottomWidth: 0, shadowColor: 'transparent', elevation: 0 },
-          headerTintColor: '#F59E0B',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/ProfileScreen')} style={{ marginRight: 20 }}>
-              <User size={24} color="#F59E0B" />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
           tabBarLabel: 'Directory',
           tabBarIcon: ({ color }) => <Users size={22} color={color} />,
         }}
@@ -157,15 +137,7 @@ export default function TabLayout() {
         name="AIQuota"
         options={{
           href: isInstructor ? undefined : null,
-          headerShown: isInstructor,
-          headerTitle: 'AI Quota',
-          headerStyle: { backgroundColor: '#0B1120', borderBottomWidth: 0, shadowColor: 'transparent', elevation: 0 },
-          headerTintColor: '#F59E0B',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/ProfileScreen')} style={{ marginRight: 20 }}>
-              <User size={24} color="#F59E0B" />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
           tabBarLabel: 'AI Quota',
           tabBarIcon: ({ color }) => <Zap size={22} color={color} />,
         }}
@@ -205,7 +177,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderTopWidth: 0,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     backgroundColor: 'transparent',
     elevation: 0,
   },

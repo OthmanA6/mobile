@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { BookOpen, Users, Award, Calendar, AlertCircle } from 'lucide-react-native';
+import { BookOpen, Users, Award, Calendar, AlertCircle, AlertTriangle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 import apiClient from '../../src/api/client';
 
 interface CourseData {
@@ -14,6 +17,7 @@ interface CourseData {
 }
 
 export default function InstructorCourses() {
+  const insets = useSafeAreaInsets();
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,41 +55,63 @@ export default function InstructorCourses() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#F59E0B" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <AlertCircle size={48} color="#ef4444" style={{ marginBottom: 16 }} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchCourses}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
+      <View style={styles.loadingContainer}>
+        <LinearGradient
+          colors={['#090514', '#0c0a1a', '#02010a']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text style={styles.loadingText}>Syncing Courses...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={courses}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.subtitle}>List of active courses assigned to you for teaching, syllabus management and evaluations.</Text>
-          </>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.courseCard}>
-            <BlurView intensity={20} tint="dark" style={styles.blurInner}>
+      {/* Dark Premium Gradient Background */}
+      <LinearGradient
+        colors={['#090514', '#0c0a1a', '#02010a']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Ambient background glows */}
+      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
+      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]} />
+
+      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+        {/* Header */}
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>My Courses</Text>
+          <Text style={styles.subtitle}>List of active courses assigned to you for teaching, syllabus management and evaluations.</Text>
+        </View>
+
+        {error && (
+          <Animatable.View animation="fadeInDown" style={styles.errorContainer}>
+            <BlurView intensity={40} tint="dark" style={styles.errorBlur}>
+              <View style={styles.errorLeft}>
+                <AlertTriangle size={18} color="#f87171" style={styles.errorIcon} />
+                <Text style={styles.errorBannerText}>{error}</Text>
+              </View>
+              <TouchableOpacity style={styles.retryBannerButton} onPress={fetchCourses}>
+                <Text style={styles.retryBannerText}>Retry</Text>
+              </TouchableOpacity>
+            </BlurView>
+          </Animatable.View>
+        )}
+
+        <FlatList
+          data={courses}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 140 }]}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <Animatable.View animation="fadeInUp" duration={600} delay={index * 50} style={styles.courseCard}>
+              <BlurView intensity={45} tint="dark" style={styles.blurInner}>
               <View style={styles.header}>
                 <View style={styles.iconContainer}>
-                  <BookOpen size={24} color="#F59E0B" />
+                  <BookOpen size={24} color="#a5b4fc" />
                 </View>
                 <View style={styles.headerText}>
                   <Text style={styles.courseCode}>{item.courseCode}</Text>
@@ -109,13 +135,18 @@ export default function InstructorCourses() {
                   <Text style={styles.statLabel}>2026 Term</Text>
                 </View>
               </View>
+              </BlurView>
+            </Animatable.View>
+          )}
+          ListEmptyComponent={
+            <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
+              <BookOpen size={36} color="#4f46e5" style={styles.emptyIcon} />
+              <Text style={styles.emptyTitle}>No Courses Found</Text>
+              <Text style={styles.emptyText}>No assigned courses found.</Text>
             </BlurView>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No assigned courses found.</Text>
-        }
-      />
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -123,30 +154,99 @@ export default function InstructorCourses() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120',
+    backgroundColor: '#02010a',
   },
-  centered: {
+  glowOrb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.8,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#02010a',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  scrollContent: {
-    paddingTop: 10,
-    paddingBottom: 110,
+  loadingText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: 16,
+    textTransform: 'uppercase',
+  },
+  mainWrapper: {
+    flex: 1,
     paddingHorizontal: 20,
   },
-  subtitle: {
-    color: '#94a3b8',
-    fontSize: 14,
-    lineHeight: 20,
+  scrollContent: {
+    paddingBottom: 28,
+  },
+  headerTop: {
     marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 4,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  errorContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+    marginBottom: 20,
+  },
+  errorBlur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  errorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  errorIcon: {
+    marginRight: 10,
+  },
+  errorBannerText: {
+    color: '#fca5a5',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  retryBannerButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  retryBannerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   courseCard: {
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   blurInner: {
     padding: 20,
@@ -160,7 +260,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -171,7 +271,7 @@ const styles = StyleSheet.create({
   courseCode: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#F59E0B',
+    color: '#a5b4fc',
     letterSpacing: 0.5,
   },
   courseName: {
@@ -204,28 +304,28 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontWeight: '500',
   },
-  errorText: {
-    color: '#ef4444',
+  emptyContainer: {
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    marginTop: 20,
+  },
+  emptyIcon: {
+    marginBottom: 14,
+  },
+  emptyTitle: {
     fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#F59E0B',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  retryText: {
+    fontWeight: '800',
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: 6,
   },
   emptyText: {
-    color: '#64748b',
-    fontSize: 14,
-    fontStyle: 'italic',
+    fontSize: 13,
+    color: '#94a3b8',
     textAlign: 'center',
-    marginTop: 40,
+    lineHeight: 18,
   },
 });

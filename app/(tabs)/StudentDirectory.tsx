@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Search, User, Mail, GraduationCap, School, AlertCircle } from 'lucide-react-native';
+import { Search, User, Mail, GraduationCap, School, AlertCircle, AlertTriangle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 import apiClient from '../../src/api/client';
 
 interface Student {
@@ -23,6 +26,7 @@ interface Student {
 }
 
 export default function StudentDirectory() {
+  const insets = useSafeAreaInsets();
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,87 +78,119 @@ export default function StudentDirectory() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#F59E0B" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <AlertCircle size={48} color="#ef4444" style={{ marginBottom: 16 }} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchStudents}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
+      <View style={styles.loadingContainer}>
+        <LinearGradient
+          colors={['#090514', '#0c0a1a', '#02010a']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text style={styles.loadingText}>Syncing Directory...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Search Header */}
-      <View style={styles.searchHeader}>
-        <BlurView intensity={20} tint="dark" style={styles.searchBlur}>
-          <Search size={20} color="#94a3b8" style={styles.searchIcon} />
-          <TextInput
-            placeholder="Search students..."
-            placeholderTextColor="#64748b"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </BlurView>
-      </View>
+      {/* Dark Premium Gradient Background */}
+      <LinearGradient
+        colors={['#090514', '#0c0a1a', '#02010a']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      <FlatList
-        data={filteredStudents}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F59E0B" />}
-        renderItem={({ item }) => (
-          <View style={styles.studentCard}>
-            <BlurView intensity={20} tint="dark" style={styles.blurInner}>
-              <View style={styles.avatarRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {item.firstName[0]}
-                    {item.lastName[0]}
-                  </Text>
-                </View>
-                <View style={styles.info}>
-                  <Text style={styles.name}>
-                    {item.firstName} {item.lastName}
-                  </Text>
-                  <View style={styles.emailRow}>
-                    <Mail size={12} color="#94a3b8" style={{ marginRight: 6 }} />
-                    <Text style={styles.email}>{item.email}</Text>
+      {/* Ambient background glows */}
+      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
+      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]} />
+
+      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+        {/* Header */}
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Student Directory</Text>
+          <Text style={styles.subtitle}>Browse and search all students enrolled in your courses.</Text>
+        </View>
+
+        {/* Search Header */}
+        <View style={styles.searchHeader}>
+          <BlurView intensity={30} tint="dark" style={styles.searchBlur}>
+            <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search students..."
+              placeholderTextColor="#64748b"
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </BlurView>
+        </View>
+
+        {error && (
+          <Animatable.View animation="fadeInDown" style={styles.errorContainer}>
+            <BlurView intensity={40} tint="dark" style={styles.errorBlur}>
+              <View style={styles.errorLeft}>
+                <AlertTriangle size={18} color="#f87171" style={styles.errorIcon} />
+                <Text style={styles.errorBannerText}>{error}</Text>
+              </View>
+              <TouchableOpacity style={styles.retryBannerButton} onPress={fetchStudents}>
+                <Text style={styles.retryBannerText}>Retry</Text>
+              </TouchableOpacity>
+            </BlurView>
+          </Animatable.View>
+        )}
+
+        <FlatList
+          data={filteredStudents}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 140 }]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+          renderItem={({ item, index }) => (
+            <Animatable.View animation="fadeInUp" duration={600} delay={index * 50} style={styles.studentCard}>
+              <BlurView intensity={45} tint="dark" style={styles.blurInner}>
+                <View style={styles.avatarRow}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {item.firstName[0]}
+                      {item.lastName[0]}
+                    </Text>
+                  </View>
+                  <View style={styles.info}>
+                    <Text style={styles.name}>
+                      {item.firstName} {item.lastName}
+                    </Text>
+                    <View style={styles.emailRow}>
+                      <Mail size={12} color="#94a3b8" style={{ marginRight: 6 }} />
+                      <Text style={styles.email}>{item.email}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View style={styles.metadataRow}>
-                <View style={styles.metaItem}>
-                  <GraduationCap size={16} color="#F59E0B" />
-                  <Text style={styles.metaText}>
-                    Year {item.profile?.data.academicYear || 1}
-                  </Text>
+                <View style={styles.metadataRow}>
+                  <View style={styles.metaItem}>
+                    <GraduationCap size={16} color="#a5b4fc" />
+                    <Text style={styles.metaText}>
+                      Year {item.profile?.data.academicYear || 1}
+                    </Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <School size={16} color="#a5b4fc" />
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {item.profile?.data.departmentId?.code || 'CS'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.metaItem}>
-                  <School size={16} color="#F59E0B" />
-                  <Text style={styles.metaText} numberOfLines={1}>
-                    {item.profile?.data.departmentId?.code || 'CS'}
-                  </Text>
-                </View>
-              </View>
+              </BlurView>
+            </Animatable.View>
+          )}
+          ListEmptyComponent={
+            <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
+              <Users size={36} color="#4f46e5" style={styles.emptyIcon} />
+              <Text style={styles.emptyTitle}>No Students Found</Text>
+              <Text style={styles.emptyText}>No students match your criteria.</Text>
             </BlurView>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No students found in your courses.</Text>
-        }
-      />
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -162,17 +198,51 @@ export default function StudentDirectory() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120',
+    backgroundColor: '#02010a',
   },
-  centered: {
+  glowOrb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.8,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#02010a',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+  },
+  loadingText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: 16,
+    textTransform: 'uppercase',
+  },
+  mainWrapper: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  headerTop: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 4,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   searchHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 6,
+    marginBottom: 20,
   },
   searchBlur: {
     flexDirection: 'row',
@@ -181,7 +251,8 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(15, 23, 42, 0.2)',
     overflow: 'hidden',
   },
   searchIcon: {
@@ -194,16 +265,55 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   scrollContent: {
-    paddingTop: 10,
-    paddingBottom: 110,
-    paddingHorizontal: 20,
+    paddingBottom: 28,
+  },
+  errorContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+    marginBottom: 20,
+  },
+  errorBlur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  errorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  errorIcon: {
+    marginRight: 10,
+  },
+  errorBannerText: {
+    color: '#fca5a5',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  retryBannerButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  retryBannerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   studentCard: {
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   blurInner: {
     padding: 16,
@@ -217,15 +327,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(99, 102, 241, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   avatarText: {
-    color: '#F59E0B',
+    color: '#a5b4fc',
     fontWeight: '700',
     fontSize: 16,
   },
@@ -264,28 +374,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
   },
-  errorText: {
-    color: '#ef4444',
+  emptyContainer: {
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    marginTop: 20,
+  },
+  emptyIcon: {
+    marginBottom: 14,
+  },
+  emptyTitle: {
     fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#F59E0B',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  retryText: {
+    fontWeight: '800',
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: 6,
   },
   emptyText: {
-    color: '#64748b',
-    fontSize: 14,
-    fontStyle: 'italic',
+    fontSize: 13,
+    color: '#94a3b8',
     textAlign: 'center',
-    marginTop: 40,
+    lineHeight: 18,
   },
 });
