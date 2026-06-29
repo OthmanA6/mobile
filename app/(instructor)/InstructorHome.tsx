@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, BackHandler, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar, AlertTriangle } from 'lucide-react-native';
+import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar, AlertTriangle, Bell, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -189,8 +189,31 @@ export default function InstructorHome() {
             <>
               {/* Header */}
               <View style={styles.header}>
-                <Text style={styles.title}>Command Center</Text>
-                <Text style={styles.subtitle}>Overview and active module tasks</Text>
+                <View>
+                  <Text style={styles.title}>Command Center</Text>
+                  <Text style={styles.subtitle}>Overview and active module tasks</Text>
+                </View>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity
+                    style={styles.notificationButton}
+                    onPress={() => router.push('/ProfileScreen')}
+                    activeOpacity={0.7}
+                  >
+                    <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
+                      <User size={20} color="#fff" />
+                    </BlurView>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.notificationButton}
+                    onPress={() => Alert.alert('Notifications', 'No new notifications')}
+                    activeOpacity={0.7}
+                  >
+                    <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
+                      <Bell size={20} color="#fff" />
+                    </BlurView>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {error && (
@@ -314,7 +337,27 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  notificationButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  bellBlur: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
