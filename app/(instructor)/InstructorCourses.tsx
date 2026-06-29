@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BookOpen, Users, Award, Calendar, AlertCircle, AlertTriangle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ interface CourseData {
   _id: string;
   courseCode: string;
   name: string;
+  enrolledStudents: any[];
   enrolledCount: number;
   credits: number;
   description: string;
@@ -26,18 +27,17 @@ export default function InstructorCourses() {
     try {
       setLoading(true);
       setError(null);
-      // Retrieve modules data from backend dashboard aggregation
-      const response = await apiClient.get('/instructor/dashboard');
-      const data = response.data.data;
-      
-      // Adapt recentModules to include credits/description for preview
-      const mapped = data.recentModules.map((c: any) => ({
+      const response = await apiClient.get('/courses');
+      const rawCourses = response.data.data.courses;
+
+      const mapped: CourseData[] = rawCourses.map((c: any) => ({
         _id: c._id,
         courseCode: c.courseCode,
         name: c.name,
-        enrolledCount: c.enrolledCount,
-        credits: 3, // Default fallback
-        description: `Academic course ${c.courseCode} details and student grading rubrics.`
+        enrolledStudents: c.enrolledStudents || [],
+        enrolledCount: (c.enrolledStudents || []).length,
+        credits: c.credits || 3,
+        description: c.description || `Academic course ${c.courseCode} details and student grading rubrics.`,
       }));
 
       setCourses(mapped);

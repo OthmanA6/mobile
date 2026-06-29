@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Search, User, Mail, GraduationCap, School, AlertCircle, AlertTriangle } from 'lucide-react-native';
+import { Search, Mail, GraduationCap, School, AlertTriangle, Users } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
@@ -140,7 +140,7 @@ export default function StudentDirectory() {
 
         <FlatList
           data={filteredStudents}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id || item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 140 }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}

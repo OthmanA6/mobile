@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -154,6 +155,27 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     fetchDashboardData(true);
+  }, []);
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert('Hold on!', 'Are you sure you want to exit?', [
+        {
+          text: 'Cancel',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        { text: 'YES', onPress: () => BackHandler.exitApp() },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
   }, []);
 
   const onRefresh = async () => {
@@ -346,7 +368,7 @@ export default function StudentDashboard() {
         >
           {/* Card 1: Pending Tasks */}
           <Animatable.View animation="fadeInRight" duration={600} delay={100} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentTasks')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentTasks')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
                   <Clock size={20} color="#f87171" />
@@ -361,7 +383,7 @@ export default function StudentDashboard() {
 
           {/* Card 2: Forms & Surveys */}
           <Animatable.View animation="fadeInRight" duration={600} delay={150} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentForms')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentForms')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
                   <FileText size={20} color="#f472b6" />
@@ -376,7 +398,7 @@ export default function StudentDashboard() {
 
           {/* Card 3: Enrolled Courses */}
           <Animatable.View animation="fadeInRight" duration={600} delay={200} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentModules')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentModules')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
                   <BookOpen size={20} color="#cfbcff" />
@@ -391,7 +413,7 @@ export default function StudentDashboard() {
 
           {/* Card 4: Completed */}
           <Animatable.View animation="fadeInRight" duration={600} delay={300} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(tabs)/StudentTasks')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentTasks')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
                   <CheckCircle2 size={20} color="#34d399" />

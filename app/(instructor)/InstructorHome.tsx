@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, BackHandler, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar, AlertTriangle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -42,8 +42,54 @@ export default function InstructorHome() {
   const fetchDashboard = async () => {
     try {
       setError(null);
-      const response = await apiClient.get('/instructor/dashboard');
-      setData(response.data.data);
+      // Compose dashboard from two role-aware endpoints in parallel
+      const [coursesRes, tasksRes] = await Promise.all([
+        apiClient.get('/courses'),
+        apiClient.get('/tasks'),
+      ]);
+
+      const courses: any[] = coursesRes.data.data.courses || [];
+      const tasks: any[] = tasksRes.data.data.tasks || [];
+
+      // Derive total enrolled students across all courses
+      const totalStudents = courses.reduce(
+        (sum: number, c: any) => sum + (c.enrolledStudents?.length || 0),
+        0
+      );
+
+      // Build courseId → courseCode map since course_id is NOT populated in tasks
+      const courseMap: Record<string, string> = {};
+      for (const c of courses) {
+        courseMap[c._id] = c.courseCode;
+      }
+
+      // Active tasks = tasks that have a deadline in the future
+      const now = new Date();
+      const activeTasks = tasks
+        .filter((t: any) => t.status !== 'COMPLETED' && new Date(t.deadline) > now)
+        .slice(0, 10)
+        .map((t: any) => ({
+          _id: t._id,
+          title: t.title,
+          courseId: { courseCode: courseMap[t.target?.course_id] || '' },
+          deadline: t.deadline,
+        }));
+
+      setData({
+        metrics: {
+          totalModules: courses.length,
+          totalStudents,
+          avgPerformance: 0, // No endpoint for this yet
+          pendingReviews: tasks.filter((t: any) => t.status === 'PENDING').length,
+        },
+        recentModules: courses.slice(0, 6).map((c: any) => ({
+          _id: c._id,
+          courseCode: c.courseCode,
+          name: c.name,
+          enrolledCount: c.enrolledStudents?.length || 0,
+        })),
+        activeTasks,
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to load dashboard data');
@@ -55,6 +101,27 @@ export default function InstructorHome() {
 
   useEffect(() => {
     fetchDashboard();
+  }, []);
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert('Hold on!', 'Are you sure you want to exit?', [
+        {
+          text: 'Cancel',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        { text: 'YES', onPress: () => BackHandler.exitApp() },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
   }, []);
 
   const onRefresh = useCallback(() => {
@@ -146,66 +213,66 @@ export default function InstructorHome() {
                 {renderMetricCard('Total Students', data?.metrics.totalStudents || 0, <Users size={20} color="#cfbcff" />)}
                 {renderMetricCard('Avg Performance', `${data?.metrics.avgPerformance || 0}%`, <TrendingUp size={20} color="#cfbcff" />)}
                 {renderMetricCard('Pending Reviews', data?.metrics.pendingReviews || 0, <ClipboardCheck size={20} color="#cfbcff" />)}
-            </View>
+              </View>
 
-            {/* Recent Modules */}
-            <Text style={styles.sectionTitle}>Recent Modules</Text>
-            {data?.recentModules && data.recentModules.length > 0 ? (
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={data.recentModules}
-                keyExtractor={(item) => item._id}
-                contentContainerStyle={styles.horizontalList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity 
-                    style={styles.moduleCard}
-                    onPress={() => router.push({ pathname: '/(tabs)/InstructorCourses', params: { courseId: item._id } })}
-                  >
-                    <BlurView intensity={45} tint="dark" style={styles.moduleBlurInner}>
-                      <Text style={styles.moduleCode}>{item.courseCode}</Text>
-                      <Text style={styles.moduleName} numberOfLines={1}>{item.name}</Text>
-                      <View style={styles.moduleFooter}>
-                        <Users size={12} color="#94a3b8" />
-                        <Text style={styles.moduleStudents}>{item.enrolledCount} Enrolled</Text>
-                      </View>
-                    </BlurView>
-                  </TouchableOpacity>
-                )}
-              />
-            ) : (
-              <Text style={styles.emptyText}>No recent modules found.</Text>
-            )}
-
-            {/* Active Tasks Feed */}
-            <Text style={styles.sectionTitle}>Active Task Feed</Text>
-            {data?.activeTasks && data.activeTasks.length > 0 ? (
-              data.activeTasks.map((task) => (
-                <View key={task._id} style={styles.taskCard}>
-                  <BlurView intensity={45} tint="dark" style={styles.taskBlurInner}>
-                    <View style={styles.taskInfo}>
-                      <Text style={styles.taskCourse}>{task.courseId?.courseCode}</Text>
-                      <Text style={styles.taskTitle}>{task.title}</Text>
-                      <View style={styles.taskMeta}>
-                        <Calendar size={14} color="#94a3b8" />
-                        <Text style={styles.taskDeadline}>
-                          {new Date(task.deadline).toLocaleDateString()}
-                        </Text>
-                      </View>
-                    </View>
+              {/* Recent Modules */}
+              <Text style={styles.sectionTitle}>Recent Modules</Text>
+              {data?.recentModules && data.recentModules.length > 0 ? (
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={data.recentModules}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.horizontalList}
+                  renderItem={({ item }) => (
                     <TouchableOpacity 
-                      style={styles.reviewButton}
-                      onPress={() => router.push('/(tabs)/StudentDirectory')} // Fallback page redirect
+                      style={styles.moduleCard}
+                      onPress={() => router.push({ pathname: '/(instructor)/InstructorCourses', params: { courseId: item._id } })}
                     >
-                      <Text style={styles.reviewButtonText}>View</Text>
+                      <BlurView intensity={45} tint="dark" style={styles.moduleBlurInner}>
+                        <Text style={styles.moduleCode}>{item.courseCode}</Text>
+                        <Text style={styles.moduleName} numberOfLines={1}>{item.name}</Text>
+                        <View style={styles.moduleFooter}>
+                          <Users size={12} color="#94a3b8" />
+                          <Text style={styles.moduleStudents}>{item.enrolledCount} Enrolled</Text>
+                        </View>
+                      </BlurView>
                     </TouchableOpacity>
-                  </BlurView>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptyText}>No active tasks right now.</Text>
-            )}
-          </>
+                  )}
+                />
+              ) : (
+                <Text style={styles.emptyText}>No recent modules found.</Text>
+              )}
+
+              {/* Active Tasks Feed */}
+              <Text style={styles.sectionTitle}>Active Task Feed</Text>
+              {data?.activeTasks && data.activeTasks.length > 0 ? (
+                data.activeTasks.map((task) => (
+                  <View key={task._id} style={styles.taskCard}>
+                    <BlurView intensity={45} tint="dark" style={styles.taskBlurInner}>
+                      <View style={styles.taskInfo}>
+                        <Text style={styles.taskCourse}>{task.courseId?.courseCode}</Text>
+                        <Text style={styles.taskTitle}>{task.title}</Text>
+                        <View style={styles.taskMeta}>
+                          <Calendar size={14} color="#94a3b8" />
+                          <Text style={styles.taskDeadline}>
+                            {new Date(task.deadline).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity 
+                        style={styles.reviewButton}
+                        onPress={() => router.push('/(instructor)/StudentDirectory')} // Fallback page redirect
+                      >
+                        <Text style={styles.reviewButtonText}>View</Text>
+                      </TouchableOpacity>
+                    </BlurView>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No active tasks right now.</Text>
+              )}
+            </>
         }
       />
       </View>
@@ -440,7 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#6366f1',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -455,5 +522,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
     marginBottom: 24,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
   },
 });

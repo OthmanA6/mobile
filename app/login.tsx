@@ -23,6 +23,7 @@ import * as z from 'zod';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../src/api/auth';
 import { theme } from '../src/theme/theme';
+import { useAuth } from '../src/context/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -33,6 +34,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -64,13 +66,12 @@ export default function LoginScreen() {
           return;
         }
 
-        await AsyncStorage.setItem('userToken', response.token);
-        await AsyncStorage.setItem('userRole', userRole);
+        await login(response.token, userRole.toUpperCase());
 
         if (userRole.toUpperCase() === 'INSTRUCTOR') {
-          router.replace('/(tabs)/InstructorHome');
+          router.replace('/(instructor)/InstructorHome');
         } else {
-          router.replace('/(tabs)/StudentDashboard');
+          router.replace('/(student)/StudentDashboard');
         }
       } else {
         Alert.alert('Login Failed', 'No token received');
