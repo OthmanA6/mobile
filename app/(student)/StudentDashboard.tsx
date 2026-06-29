@@ -10,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -157,27 +156,6 @@ export default function StudentDashboard() {
     fetchDashboardData(true);
   }, []);
 
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert('Hold on!', 'Are you sure you want to exit?', [
-        {
-          text: 'Cancel',
-          onPress: () => null,
-          style: 'cancel',
-        },
-        { text: 'YES', onPress: () => BackHandler.exitApp() },
-      ]);
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
-    return () => backHandler.remove();
-  }, []);
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchDashboardData(false);
@@ -299,16 +277,7 @@ export default function StudentDashboard() {
               </BlurView>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.notificationButton}
-              onPress={handleNotificationPress}
-              activeOpacity={0.7}
-            >
-              <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
-                <Bell size={20} color="#fff" />
-                {metrics && metrics.pending > 0 && <View style={styles.bellBadge} />}
-              </BlurView>
-            </TouchableOpacity>
+
           </View>
         </Animatable.View>
 

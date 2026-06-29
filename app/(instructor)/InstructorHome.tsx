@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, BackHandler, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Users, ClipboardCheck, BookOpen, TrendingUp, AlertCircle, Calendar, AlertTriangle, Bell, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -103,27 +103,6 @@ export default function InstructorHome() {
     fetchDashboard();
   }, []);
 
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert('Hold on!', 'Are you sure you want to exit?', [
-        {
-          text: 'Cancel',
-          onPress: () => null,
-          style: 'cancel',
-        },
-        { text: 'YES', onPress: () => BackHandler.exitApp() },
-      ]);
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
-    return () => backHandler.remove();
-  }, []);
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchDashboard();
@@ -204,15 +183,7 @@ export default function InstructorHome() {
                     </BlurView>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.notificationButton}
-                    onPress={() => Alert.alert('Notifications', 'No new notifications')}
-                    activeOpacity={0.7}
-                  >
-                    <BlurView intensity={30} tint="dark" style={styles.bellBlur}>
-                      <Bell size={20} color="#fff" />
-                    </BlurView>
-                  </TouchableOpacity>
+
                 </View>
               </View>
 

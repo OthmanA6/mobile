@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 
 // Use EXPO_PUBLIC_API_URL for dynamic configuration via .env file, fallback to localhost for web
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.171.240.68:5000/api'; // Update fallback to your actual IPv4 if not using .env
@@ -34,6 +35,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Handle unauthorized (e.g., logout user)
       await AsyncStorage.removeItem('userToken');
+      DeviceEventEmitter.emit('auth.unauthorized');
     }
     return Promise.reject(error);
   }
