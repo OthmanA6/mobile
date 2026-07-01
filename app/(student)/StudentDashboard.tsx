@@ -95,12 +95,13 @@ export default function StudentDashboard() {
     }
     setError(false);
     try {
-      const [coursesRes, tasksRes, submissionsRes, profileRes, formsRes] = await Promise.all([
+      const [coursesRes, tasksRes, submissionsRes, profileRes, formsRes, formSubmissionsRes] = await Promise.all([
         apiClient.get('/courses'),
         apiClient.get('/tasks'),
         apiClient.get('/task-submissions/my-submissions'),
         authService.getProfile(),
         apiClient.get('/v1/form').catch(() => ({ data: { data: [] } })), // Catch form errors gracefully
+        apiClient.get('/forms/my-submissions').catch(() => ({ data: { data: [] } })),
       ]);
 
       const coursesList = coursesRes.data?.data?.courses || [];
@@ -133,11 +134,23 @@ export default function StudentDashboard() {
 
       // Filter forms that are active and assigned to STUDENT
       const allForms = formsRes.data?.data || [];
+      const myFormSubmissions = formSubmissionsRes.data?.data || [];
+      
+      const submittedFormIds = new Set(
+        myFormSubmissions.map((s: any) => {
+          if (!s.form_id) return null;
+          return typeof s.form_id === 'object' ? s.form_id._id || s.form_id.id : s.form_id;
+        }).filter(Boolean)
+      );
+
       const userDeptId = typeof profileRes?.user?.departmentId === 'object' ? (profileRes.user.departmentId as any)._id || (profileRes.user.departmentId as any).id : profileRes?.user?.departmentId;
       const studentForms = allForms.filter((f: any) => {
+        const formId = f.id || f._id;
+        if (submittedFormIds.has(formId)) return false;
+
         const isStudentForm = f.is_active && f.evaluator_roles?.includes('STUDENT');
         if (!isStudentForm) return false;
-        
+
         if (f.department_id) {
           const formDeptId = typeof f.department_id === 'object' ? (f.department_id as any)._id || (f.department_id as any).id : f.department_id;
           return formDeptId === userDeptId;
@@ -186,7 +199,7 @@ export default function StudentDashboard() {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-      
+
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -278,7 +291,7 @@ export default function StudentDashboard() {
         <Animatable.View animation="fadeIn" duration={800} style={styles.header}>
           <View>
             <Text style={styles.greetingSub}>Welcome back,</Text>
-            <Text style={styles.greetingMain}>{userName} 👋</Text>
+            <Text style={styles.greetingMain}>{userName} </Text>
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
