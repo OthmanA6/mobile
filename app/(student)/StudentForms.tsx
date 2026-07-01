@@ -26,6 +26,7 @@ import {
   BookOpen,
   ArrowLeft,
   CheckCircle2,
+  History,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../../src/api/client';
@@ -71,7 +72,9 @@ export default function StudentForms() {
 
   // Screen state: 'list' or 'fill'
   const [viewState, setViewState] = useState<'list' | 'fill'>('list');
+  const [listTab, setListTab] = useState<'pending' | 'history'>('pending');
   const [forms, setForms] = useState<Form[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
@@ -87,10 +90,25 @@ export default function StudentForms() {
     }
     setError(false);
     try {
-      const response = await apiClient.get('/v1/form');
-      const allForms = response.data?.data || [];
+      const [formResponse, submissionResponse] = await Promise.all([
+        apiClient.get('/v1/form'),
+        apiClient.get('/forms/my-submissions')
+      ]);
+      const allForms = formResponse.data?.data || [];
+      const mySubmissions = submissionResponse.data?.data || [];
+      setSubmissions(mySubmissions);
+
+      const submittedFormIds = new Set(
+        mySubmissions.map((s: any) => {
+          if (!s.form_id) return null;
+          return typeof s.form_id === 'object' ? s.form_id._id || s.form_id.id : s.form_id;
+        }).filter(Boolean)
+      );
       
       const studentForms = allForms.filter((f: Form) => {
+        const formId = f.id || f._id;
+        if (submittedFormIds.has(formId)) return false;
+
         const isStudentForm = f.is_active && f.evaluator_roles?.includes('STUDENT');
         if (!isStudentForm) return false;
         
@@ -288,8 +306,28 @@ export default function StudentForms() {
         /* ================= LIST VIEW ================= */
         <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Forms & Surveys</Text>
-            <Text style={styles.subtitle}>Complete active institutional forms and feedback surveys</Text>
+            <Text style={styles.title}>Surveys & Feedback</Text>
+            <Text style={styles.subtitle}>Complete evaluations or check your submission history</Text>
+          </View>
+
+          {/* Custom Tabs */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity 
+              style={[styles.tabButton, listTab === 'pending' && styles.tabButtonActive]}
+              onPress={() => setListTab('pending')}
+            >
+              <Text style={[styles.tabButtonText, listTab === 'pending' && styles.tabButtonTextActive]}>
+                Pending
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabButton, listTab === 'history' && styles.tabButtonActive]}
+              onPress={() => setListTab('history')}
+            >
+              <Text style={[styles.tabButtonText, listTab === 'history' && styles.tabButtonTextActive]}>
+                History
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {error && (
@@ -307,8 +345,8 @@ export default function StudentForms() {
           )}
 
           <FlatList
-            data={forms}
-            keyExtractor={(item) => item.id || item._id}
+            data={listTab === 'pending' ? forms : submissions}
+            keyExtractor={(item: any) => item.id || item._id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.flatListContent,
@@ -322,57 +360,101 @@ export default function StudentForms() {
                 colors={['#6366f1']}
               />
             }
-            renderItem={({ item, index }) => (
-              <Animatable.View
-                animation="fadeInUp"
-                duration={600}
-                delay={index * 50}
-                style={styles.cardContainer}
-              >
-                <BlurView intensity={45} tint="dark" style={styles.cardBlur}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{item.category}</Text>
-                    </View>
-                    <View style={styles.dateRow}>
-                      <Calendar size={12} color="#94a3b8" />
-                      <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
-                    </View>
-                  </View>
+            renderItem={({ item, index }: { item: any, index: number }) => {
+              if (listTab === 'pending') {
+                return (
+                  <Animatable.View
+                    animation="fadeInUp"
+                    duration={600}
+                    delay={index * 50}
+                    style={styles.cardContainer}
+                  >
+                    <BlurView intensity={45} tint="dark" style={styles.cardBlur}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.categoryBadge}>
+                          <Text style={styles.categoryText}>{item.category}</Text>
+                        </View>
+                        <View style={styles.dateRow}>
+                          <Calendar size={12} color="#94a3b8" />
+                          <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+                        </View>
+                      </View>
 
-                  <Text style={styles.formTitle} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  
-                  {item.description ? (
-                    <Text style={styles.formDescription} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  ) : null}
+                      <Text style={styles.formTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      
+                      {item.description ? (
+                        <Text style={styles.formDescription} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                      ) : null}
 
-                  <View style={styles.cardFooter}>
-                    <Text style={styles.questionCountText}>
-                      {item.questions?.length || 0} Questions
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.takeFormButton}
-                      onPress={() => handleStartForm(item)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.takeFormButtonText}>Take Survey</Text>
-                      <ChevronRight size={14} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                </BlurView>
-              </Animatable.View>
-            )}
+                      <View style={styles.cardFooter}>
+                        <Text style={styles.questionCountText}>
+                          {item.questions?.length || 0} Questions
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.takeFormButton}
+                          onPress={() => handleStartForm(item)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.takeFormButtonText}>Take Survey</Text>
+                          <ChevronRight size={14} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    </BlurView>
+                  </Animatable.View>
+                );
+              } else {
+                const formObj = item.form_id || {};
+                const formTitle = formObj.title || 'Unknown Survey';
+                const formCategory = formObj.category || 'SURVEY';
+                return (
+                  <Animatable.View
+                    animation="fadeInUp"
+                    duration={600}
+                    delay={index * 50}
+                    style={[styles.cardContainer, { opacity: 0.8 }]}
+                  >
+                    <BlurView intensity={45} tint="dark" style={styles.cardBlur}>
+                      <View style={styles.cardHeader}>
+                        <View style={[styles.categoryBadge, { backgroundColor: 'rgba(148, 163, 184, 0.15)', borderColor: 'rgba(148, 163, 184, 0.3)' }]}>
+                          <Text style={[styles.categoryText, { color: '#cbd5e1' }]}>{formCategory}</Text>
+                        </View>
+                        <View style={styles.dateRow}>
+                          <CheckCircle2 size={12} color="#10b981" />
+                          <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.formTitle} numberOfLines={2}>
+                        {formTitle}
+                      </Text>
+                      <View style={{ marginTop: 12 }}>
+                        <Text style={{ color: '#10b981', fontSize: 13, fontWeight: '600' }}>
+                          Submitted successfully
+                        </Text>
+                      </View>
+                    </BlurView>
+                  </Animatable.View>
+                );
+              }
+            }}
             ListEmptyComponent={
               !refreshing ? (
-                <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
-                  <CheckCircle2 size={36} color="#34d399" style={styles.emptyIcon} />
-                  <Text style={styles.emptyTitle}>All Caught Up! 🎉</Text>
-                  <Text style={styles.emptyText}>There are no pending surveys assigned to you at the moment.</Text>
-                </BlurView>
+                listTab === 'pending' ? (
+                  <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
+                    <CheckCircle2 size={36} color="#34d399" style={styles.emptyIcon} />
+                    <Text style={styles.emptyTitle}>All Caught Up! 🎉</Text>
+                    <Text style={styles.emptyText}>There are no pending surveys assigned to you at the moment.</Text>
+                  </BlurView>
+                ) : (
+                  <BlurView intensity={20} tint="dark" style={styles.emptyContainer}>
+                    <History size={36} color="#94a3b8" style={[styles.emptyIcon, { opacity: 0.5 }]} />
+                    <Text style={styles.emptyTitle}>No History</Text>
+                    <Text style={styles.emptyText}>You haven't completed any surveys yet.</Text>
+                  </BlurView>
+                )
               ) : null
             }
           />
@@ -625,6 +707,30 @@ const styles = StyleSheet.create({
   flatListContent: {
     paddingTop: 10,
     gap: 16,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabButtonActive: {
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  tabButtonText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tabButtonTextActive: {
+    color: '#fff',
   },
   errorContainer: {
     borderRadius: 16,
