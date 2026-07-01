@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Search, Mail, GraduationCap, School, AlertTriangle, Users } from 'lucide-react-native';
+import { Search, Mail, GraduationCap, School, AlertTriangle, Users, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
+import { useRouter } from 'expo-router';
 import apiClient from '../../src/api/client';
 
 interface Student {
@@ -27,6 +28,7 @@ interface Student {
 
 export default function StudentDirectory() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,40 +148,46 @@ export default function StudentDirectory() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
           renderItem={({ item, index }) => (
             <Animatable.View animation="fadeInUp" duration={600} delay={index * 50} style={styles.studentCard}>
-              <BlurView intensity={45} tint="dark" style={styles.blurInner}>
-                <View style={styles.avatarRow}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {item.firstName[0]}
-                      {item.lastName[0]}
-                    </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/(instructor)/StudentProfileDetail', params: { studentId: item.id || item._id } })}
+              >
+                <BlurView intensity={45} tint="dark" style={styles.blurInner}>
+                  <View style={styles.avatarRow}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {item.firstName[0]}
+                        {item.lastName[0]}
+                      </Text>
+                    </View>
+                    <View style={styles.info}>
+                      <Text style={styles.name}>
+                        {item.firstName} {item.lastName}
+                      </Text>
+                      <View style={styles.emailRow}>
+                        <Mail size={12} color="#94a3b8" style={{ marginRight: 6 }} />
+                        <Text style={styles.email}>{item.email}</Text>
+                      </View>
+                    </View>
+                    <ChevronRight size={18} color="#4f46e5" />
                   </View>
-                  <View style={styles.info}>
-                    <Text style={styles.name}>
-                      {item.firstName} {item.lastName}
-                    </Text>
-                    <View style={styles.emailRow}>
-                      <Mail size={12} color="#94a3b8" style={{ marginRight: 6 }} />
-                      <Text style={styles.email}>{item.email}</Text>
+
+                  <View style={styles.metadataRow}>
+                    <View style={styles.metaItem}>
+                      <GraduationCap size={16} color="#a5b4fc" />
+                      <Text style={styles.metaText}>
+                        Year {item.profile?.data.academicYear || 1}
+                      </Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <School size={16} color="#a5b4fc" />
+                      <Text style={styles.metaText} numberOfLines={1}>
+                        {item.profile?.data.departmentId?.code || 'CS'}
+                      </Text>
                     </View>
                   </View>
-                </View>
-
-                <View style={styles.metadataRow}>
-                  <View style={styles.metaItem}>
-                    <GraduationCap size={16} color="#a5b4fc" />
-                    <Text style={styles.metaText}>
-                      Year {item.profile?.data.academicYear || 1}
-                    </Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <School size={16} color="#a5b4fc" />
-                    <Text style={styles.metaText} numberOfLines={1}>
-                      {item.profile?.data.departmentId?.code || 'CS'}
-                    </Text>
-                  </View>
-                </View>
-              </BlurView>
+                </BlurView>
+              </TouchableOpacity>
             </Animatable.View>
           )}
           ListEmptyComponent={

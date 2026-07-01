@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,6 +24,8 @@ import {
   Clock,
   CheckCircle2,
   Ban,
+  FileText,
+  Download,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -57,6 +60,11 @@ interface Task {
   };
   status: string;
   task_type?: string;
+  attachments?: {
+    url: string;
+    fileName?: string;
+    size?: number;
+  }[];
 }
 
 interface Submission {
@@ -160,6 +168,16 @@ export default function StudentModules() {
     if (!courseId) return 'General Assignment';
     const course = courses.find((c) => (c._id || c.id) === courseId);
     return course ? course.name : 'Unknown Course';
+  };
+
+  const getFullUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL 
+      ? process.env.EXPO_PUBLIC_API_URL.replace(/\/api\/?$/, '') 
+      : 'http://10.171.240.63:5000';
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    return `${baseUrl}/${cleanUrl}`;
   };
 
   const formatDeadlineText = (dateStr: string) => {
@@ -410,6 +428,42 @@ export default function StudentModules() {
                           <Clock size={14} color="#a78bfa" />
                           <Text style={styles.taskDeadlineText}>Due {formatDeadlineText(item.deadline)}</Text>
                         </View>
+                        
+                        {item.attachments && item.attachments.length > 0 && (
+                          <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.05)' }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Attachments</Text>
+                            <View style={{ gap: 8 }}>
+                              {item.attachments.map((att: any, idx: number) => (
+                                <TouchableOpacity
+                                  key={idx}
+                                  activeOpacity={0.7}
+                                  onPress={() => {
+                                    if (att.url) {
+                                      Linking.openURL(getFullUrl(att.url)).catch(() => {
+                                        Alert.alert('Error', 'Could not open the attachment link.');
+                                      });
+                                    }
+                                  }}
+                                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderRadius: 8, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
+                                >
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                                    <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(99, 102, 241, 0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                                      <FileText size={14} color="#818cf8" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#e2e8f0' }} numberOfLines={1}>
+                                        {att.fileName || `Attachment ${idx + 1}`}
+                                      </Text>
+                                    </View>
+                                  </View>
+                                  <View style={{ padding: 4, borderRadius: 6, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                                    <Download size={12} color="#cbd5e1" />
+                                  </View>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          </View>
+                        )}
                       </View>
 
                       <View style={styles.taskActionRow}>

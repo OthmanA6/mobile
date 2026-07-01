@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { BookOpen, Users, Award, Calendar, AlertCircle, AlertTriangle } from 'lucide-react-native';
+import { BookOpen, Users, Award, Calendar, AlertTriangle, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
+import { useRouter } from 'expo-router';
 import apiClient from '../../src/api/client';
 
 interface CourseData {
@@ -19,6 +20,7 @@ interface CourseData {
 
 export default function InstructorCourses() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,34 +110,40 @@ export default function InstructorCourses() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <Animatable.View animation="fadeInUp" duration={600} delay={index * 50} style={styles.courseCard}>
-              <BlurView intensity={45} tint="dark" style={styles.blurInner}>
-              <View style={styles.header}>
-                <View style={styles.iconContainer}>
-                  <BookOpen size={24} color="#a5b4fc" />
-                </View>
-                <View style={styles.headerText}>
-                  <Text style={styles.courseCode}>{item.courseCode}</Text>
-                  <Text style={styles.courseName}>{item.name}</Text>
-                </View>
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.push({ pathname: '/(instructor)/InstructorCourseDetail', params: { courseId: item._id } })}
+              >
+                <BlurView intensity={45} tint="dark" style={styles.blurInner}>
+                  <View style={styles.header}>
+                    <View style={styles.iconContainer}>
+                      <BookOpen size={24} color="#a5b4fc" />
+                    </View>
+                    <View style={styles.headerText}>
+                      <Text style={styles.courseCode}>{item.courseCode}</Text>
+                      <Text style={styles.courseName}>{item.name}</Text>
+                    </View>
+                    <ChevronRight size={18} color="#4f46e5" />
+                  </View>
 
-              <Text style={styles.description}>{item.description}</Text>
+                  <Text style={styles.description}>{item.description}</Text>
 
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Users size={16} color="#94a3b8" />
-                  <Text style={styles.statLabel}>{item.enrolledCount} Students</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Award size={16} color="#94a3b8" />
-                  <Text style={styles.statLabel}>{item.credits} Credits</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Calendar size={16} color="#94a3b8" />
-                  <Text style={styles.statLabel}>2026 Term</Text>
-                </View>
-              </View>
-              </BlurView>
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Users size={16} color="#94a3b8" />
+                      <Text style={styles.statLabel}>{item.enrolledCount} Students</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Award size={16} color="#94a3b8" />
+                      <Text style={styles.statLabel}>{item.credits} Credits</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Calendar size={16} color="#94a3b8" />
+                      <Text style={styles.statLabel}>2026 Term</Text>
+                    </View>
+                  </View>
+                </BlurView>
+              </TouchableOpacity>
             </Animatable.View>
           )}
           ListEmptyComponent={

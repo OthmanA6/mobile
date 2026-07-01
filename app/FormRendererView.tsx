@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ import {
   Image as ImageIcon,
   Trash2,
   FileText,
+  Download,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../src/api/client';
@@ -62,6 +64,7 @@ export default function FormRendererView() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
   
+  const [task, setTask] = useState<any>(null);
   const [form, setForm] = useState<FormSchema | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
 
@@ -82,6 +85,16 @@ export default function FormRendererView() {
     message: '',
     type: 'info',
   });
+
+  const getFullUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL 
+      ? process.env.EXPO_PUBLIC_API_URL.replace(/\/api\/?$/, '') 
+      : 'http://10.171.240.63:5000';
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    return `${baseUrl}/${cleanUrl}`;
+  };
 
   const showAlert = (
     title: string,
@@ -227,6 +240,8 @@ export default function FormRendererView() {
       if (!task) {
         throw new Error('Task not found');
       }
+      
+      setTask(task);
 
       if (!task.form_id) {
         // Fallback for standard tasks without an associated evaluation form
@@ -451,10 +466,65 @@ export default function FormRendererView() {
             <ArrowLeft size={20} color="#fff" />
           </BlurView>
         </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {form.title}
-          </Text>
+        
+        <View style={styles.activeFormHeader}>
+          <Text style={styles.activeFormTitle}>{form?.title}</Text>
+          
+          {/* Task Details Section */}
+          {task && (task.description || (task.attachments && task.attachments.length > 0)) && (
+            <View style={{ marginTop: 24 }}>
+              <BlurView intensity={30} tint="dark" style={{ padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', overflow: 'hidden' }}>
+                {task.description && (
+                  <View style={{ marginBottom: (task.attachments && task.attachments.length > 0) ? 16 : 0 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Task Description</Text>
+                    <Text style={{ fontSize: 14, color: '#e2e8f0', lineHeight: 22 }}>{task.description}</Text>
+                  </View>
+                )}
+                
+                {task.attachments && task.attachments.length > 0 && (
+                  <View>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Instructor Attachments</Text>
+                    <View style={{ gap: 8 }}>
+                      {task.attachments.map((att: any, idx: number) => (
+                        <TouchableOpacity
+                          key={idx}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            if (att.url) {
+                              Linking.openURL(getFullUrl(att.url)).catch(() => {
+                                showAlert('Error', 'Could not open the attachment link.', 'error');
+                              });
+                            }
+                          }}
+                          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 12, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(99, 102, 241, 0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                              <FileText size={16} color="#818cf8" />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }} numberOfLines={1}>
+                                {att.fileName || `Attachment ${idx + 1}`}
+                              </Text>
+                              {att.size ? (
+                                <Text style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                                  {(att.size / 1024).toFixed(1)} KB
+                                </Text>
+                              ) : null}
+                            </View>
+                          </View>
+                          <View style={{ padding: 6, borderRadius: 8, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <Download size={14} color="#e2e8f0" />
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </BlurView>
+            </View>
+          )}
+
           <Text style={styles.headerSubtitle} numberOfLines={1}>
             {courseName || 'Evaluation Form'}
           </Text>

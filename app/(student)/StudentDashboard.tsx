@@ -145,9 +145,6 @@ export default function StudentDashboard() {
 
       const userDeptId = typeof profileRes?.user?.departmentId === 'object' ? (profileRes.user.departmentId as any)._id || (profileRes.user.departmentId as any).id : profileRes?.user?.departmentId;
       const studentForms = allForms.filter((f: any) => {
-        const formId = f.id || f._id;
-        if (submittedFormIds.has(formId)) return false;
-
         const isStudentForm = f.is_active && f.evaluator_roles?.includes('STUDENT');
         if (!isStudentForm) return false;
 

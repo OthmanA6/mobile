@@ -55,6 +55,10 @@ export default function InstructorTabLayout() {
       <Tabs.Screen name="InstructorDashboard" options={{ href: null }} />
       <Tabs.Screen name="InstructorModules" options={{ href: null }} />
       <Tabs.Screen name="InstructorEvaluations" options={{ href: null }} />
+      <Tabs.Screen name="InstructorCourseDetail" options={{ href: null }} />
+      <Tabs.Screen name="StudentProfileDetail" options={{ href: null }} />
+      <Tabs.Screen name="CreateQuizScreen" options={{ href: null }} />
+      <Tabs.Screen name="CreateStandardTaskScreen" options={{ href: null }} />
     </Tabs>
   );
 }
