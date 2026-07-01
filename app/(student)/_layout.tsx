@@ -9,7 +9,7 @@ export default function StudentTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#94a3b8',
@@ -39,7 +39,7 @@ export default function StudentTabLayout() {
       <Tabs.Screen
         name="StudentTasks"
         options={{
-          tabBarLabel: 'Tasks',
+          tabBarLabel: 'Evaluations',
           tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
         }}
       />
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     bottom: 25,
     left: 20,
     right: 20,
-    height: 70,
+    height: 76,
     borderRadius: 24,
     borderTopWidth: 0,
     borderWidth: 1,
@@ -76,7 +76,8 @@ const styles = StyleSheet.create({
   tabBarItem: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 8,
+    paddingBottom: 6,
   },
   tabBarLabel: {
     fontSize: 10,

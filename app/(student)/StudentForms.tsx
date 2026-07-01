@@ -30,6 +30,7 @@ import {
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../../src/api/client';
 import { theme } from '../../src/theme/theme';
+import { useAuth } from '../../src/context/AuthContext';
 
 interface Question {
   _id: string;
@@ -52,6 +53,7 @@ interface Form {
   category: 'GENERAL' | 'SPECIALIZED';
   is_anonymous: boolean;
   is_active: boolean;
+  evaluator_roles?: string[];
   createdAt?: string;
   creator_id?: {
     name?: string;
@@ -65,6 +67,7 @@ interface Form {
 
 export default function StudentForms() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
 
   // Screen state: 'list' or 'fill'
   const [viewState, setViewState] = useState<'list' | 'fill'>('list');
@@ -85,7 +88,22 @@ export default function StudentForms() {
     setError(false);
     try {
       const response = await apiClient.get('/v1/form');
-      setForms(response.data?.data || []);
+      const allForms = response.data?.data || [];
+      
+      const studentForms = allForms.filter((f: Form) => {
+        const isStudentForm = f.is_active && f.evaluator_roles?.includes('STUDENT');
+        if (!isStudentForm) return false;
+        
+        if (f.department_id) {
+          const formDeptId = typeof f.department_id === 'object' ? (f.department_id as any)._id || (f.department_id as any).id : f.department_id;
+          const userDeptId = typeof user?.departmentId === 'object' ? (user.departmentId as any)._id || (user.departmentId as any).id : user?.departmentId;
+          return formDeptId === userDeptId;
+        }
+        
+        return true;
+      });
+      
+      setForms(studentForms);
     } catch (err) {
       console.error('Failed to fetch student forms:', err);
       setError(true);

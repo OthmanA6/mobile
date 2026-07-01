@@ -124,18 +124,32 @@ export default function StudentDashboard() {
 
       const pending = tasksList.filter((t: any) => !submittedTaskIds.includes(t.id || t._id));
 
-      setMetrics({
-        pending: pending.length,
-        completed: submissionsList.length,
-        courses: coursesList.length,
-        forms: (formsRes.data?.data || []).length,
-      });
-
-      // Filter out tasks that have passed their deadline for the Action Required list
+      // Filter out tasks that have passed their deadline
       const now = Date.now();
       const activePending = pending.filter((t: any) => {
         const deadline = new Date(t.deadline).getTime();
         return isNaN(deadline) || deadline >= now;
+      });
+
+      // Filter forms that are active and assigned to STUDENT
+      const allForms = formsRes.data?.data || [];
+      const userDeptId = typeof profileRes?.user?.departmentId === 'object' ? (profileRes.user.departmentId as any)._id || (profileRes.user.departmentId as any).id : profileRes?.user?.departmentId;
+      const studentForms = allForms.filter((f: any) => {
+        const isStudentForm = f.is_active && f.evaluator_roles?.includes('STUDENT');
+        if (!isStudentForm) return false;
+        
+        if (f.department_id) {
+          const formDeptId = typeof f.department_id === 'object' ? (f.department_id as any)._id || (f.department_id as any).id : f.department_id;
+          return formDeptId === userDeptId;
+        }
+        return true;
+      });
+
+      setMetrics({
+        pending: activePending.length,
+        completed: submissionsList.length,
+        courses: coursesList.length,
+        forms: studentForms.length,
       });
 
       // Sort active pending tasks by deadline for urgency, and take top 3
@@ -337,7 +351,7 @@ export default function StudentDashboard() {
         >
           {/* Card 1: Pending Tasks */}
           <Animatable.View animation="fadeInRight" duration={600} delay={100} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentTasks')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/StudentModules', params: { tab: 'tasks' } })} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
                   <Clock size={20} color="#f87171" />
@@ -367,7 +381,7 @@ export default function StudentDashboard() {
 
           {/* Card 3: Enrolled Courses */}
           <Animatable.View animation="fadeInRight" duration={600} delay={200} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentModules')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/StudentModules', params: { tab: 'courses' } })} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
                   <BookOpen size={20} color="#cfbcff" />
