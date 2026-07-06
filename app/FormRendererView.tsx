@@ -386,7 +386,7 @@ export default function FormRendererView() {
           text: 'OK',
           onPress: () => {
             // Navigate back and trigger refresh if possible
-            router.replace('/(student)/StudentTasks');
+            router.replace('/(student)/(tabs)/StudentTasks');
           },
         },
       ]);

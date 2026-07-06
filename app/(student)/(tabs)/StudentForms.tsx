@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,9 +29,10 @@ import {
   History,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
-import apiClient from '../../src/api/client';
-import { theme } from '../../src/theme/theme';
-import { useAuth } from '../../src/context/AuthContext';
+import { useFocusEffect } from 'expo-router';
+import apiClient from '../../../src/api/client';
+import { authService } from '../../../src/api/auth';
+import { theme } from '../../../src/theme/theme';
 
 interface Question {
   _id: string;
@@ -68,7 +69,6 @@ interface Form {
 
 export default function StudentForms() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
 
   // Screen state: 'list' or 'fill'
   const [viewState, setViewState] = useState<'list' | 'fill'>('list');
@@ -84,15 +84,16 @@ export default function StudentForms() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchStudentForms = async (showFullScreenLoading = true) => {
+  const fetchStudentForms = useCallback(async (showFullScreenLoading = true) => {
     if (showFullScreenLoading) {
       setLoading(true);
     }
     setError(false);
     try {
-      const [formResponse, submissionResponse] = await Promise.all([
+      const [formResponse, submissionResponse, profileResponse] = await Promise.all([
         apiClient.get('/v1/form'),
-        apiClient.get('/forms/my-submissions')
+        apiClient.get('/forms/my-submissions'),
+        authService.getProfile().catch(() => null)
       ]);
       const allForms = formResponse.data?.data || [];
       const mySubmissions = submissionResponse.data?.data || [];
@@ -105,6 +106,8 @@ export default function StudentForms() {
         }).filter(Boolean)
       );
       
+      const fetchedUser = profileResponse?.user || null;
+      
       const studentForms = allForms.filter((f: Form) => {
         const formId = f.id || f._id;
         if (submittedFormIds.has(formId)) return false;
@@ -114,7 +117,7 @@ export default function StudentForms() {
         
         if (f.department_id) {
           const formDeptId = typeof f.department_id === 'object' ? (f.department_id as any)._id || (f.department_id as any).id : f.department_id;
-          const userDeptId = typeof user?.departmentId === 'object' ? (user.departmentId as any)._id || (user.departmentId as any).id : user?.departmentId;
+          const userDeptId = typeof fetchedUser?.departmentId === 'object' ? (fetchedUser.departmentId as any)._id || (fetchedUser.departmentId as any).id : fetchedUser?.departmentId;
           return formDeptId === userDeptId;
         }
         
@@ -128,11 +131,17 @@ export default function StudentForms() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchStudentForms(true);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setViewState('list');
+      setActiveForm(null);
+      setAnswers({});
+      setSubmitting(false);
+      fetchStudentForms(false);
+    }, [fetchStudentForms])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -304,7 +313,7 @@ export default function StudentForms() {
 
       {viewState === 'list' ? (
         /* ================= LIST VIEW ================= */
-        <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+        <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
           <View style={styles.header}>
             <Text style={styles.title}>Surveys & Feedback</Text>
             <Text style={styles.subtitle}>Complete evaluations or check your submission history</Text>
@@ -465,7 +474,7 @@ export default function StudentForms() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: Math.max(insets.top, 24), paddingBottom: insets.bottom + 140 },
+            { paddingTop: Math.max(insets.top + 15, 35), paddingBottom: insets.bottom + 140 },
           ]}
         >
           <TouchableOpacity

@@ -18,7 +18,7 @@ import {
   FileText,
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
-import apiClient from '../../src/api/client';
+import apiClient from '../../../src/api/client';
 
 interface TaskSubmission {
   id: string;
@@ -93,7 +93,7 @@ export default function StudentTasks() {
       <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(16, 185, 129, 0.15)' }]} />
       <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(99, 102, 241, 0.1)' }]} />
 
-      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <ClipboardCheck size={28} color="#10b981" />

@@ -143,7 +143,7 @@ export default function StudentProfileDetail() {
       <View style={[styles.glowOrb, { bottom: 60, left: -100, backgroundColor: 'rgba(168,85,247,0.1)' }]} />
 
       {/* Header Bar */}
-      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 16) }]}>
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
           <BlurView intensity={30} tint="dark" style={styles.backBlur}>
             <ArrowLeft size={20} color="#fff" />

@@ -40,7 +40,11 @@ export default function SplashScreen() {
 
       <Animatable.View animation="zoomIn" duration={1000} easing="ease-out-back" style={styles.logoContainer}>
         <View style={styles.iconBox}>
-          <TrendingUp size={48} color={theme.colors.primary} strokeWidth={2.5} />
+          <Image 
+            source={require('../assets/splash-icon.png')} 
+            style={{ width: 80, height: 80 }} 
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>insightO</Text>

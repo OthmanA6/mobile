@@ -1,97 +1,27 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
-import { BookOpen, LayoutDashboard, Users, Zap } from 'lucide-react-native';
+import { Stack } from 'expo-router';
 
-export default function InstructorTabLayout() {
+export default function InstructorStackLayout() {
   return (
-    <Tabs
+    <Stack
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarStyle: styles.tabBarWithLabels,
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#94a3b8',
-        tabBarItemStyle: styles.tabBarItemWithLabel,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarBackground: () => (
-          <View style={styles.blurContainer}>
-            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
-          </View>
-        ),
+        contentStyle: { backgroundColor: '#02010a' },
+        animation: 'slide_from_right', // Native-like stack animation
       }}
     >
-      <Tabs.Screen
-        name="InstructorHome"
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color }) => <LayoutDashboard size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="InstructorCourses"
-        options={{
-          tabBarLabel: 'My Courses',
-          tabBarIcon: ({ color }) => <BookOpen size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="StudentDirectory"
-        options={{
-          tabBarLabel: 'Directory',
-          tabBarIcon: ({ color }) => <Users size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="AIQuota"
-        options={{
-          tabBarLabel: 'AI Quota',
-          tabBarIcon: ({ color }) => <Zap size={22} color={color} />,
-        }}
-      />
-
-      {/* Hidden Screens inside the Instructor Route Group */}
-      <Tabs.Screen name="InstructorDashboard" options={{ href: null }} />
-      <Tabs.Screen name="InstructorModules" options={{ href: null }} />
-      <Tabs.Screen name="InstructorEvaluations" options={{ href: null }} />
-      <Tabs.Screen name="InstructorCourseDetail" options={{ href: null }} />
-      <Tabs.Screen name="StudentProfileDetail" options={{ href: null }} />
-      <Tabs.Screen name="CreateQuizScreen" options={{ href: null }} />
-      <Tabs.Screen name="CreateStandardTaskScreen" options={{ href: null }} />
-    </Tabs>
+      <Stack.Screen name="(tabs)" />
+      
+      {/* Detail & Feature Screens */}
+      <Stack.Screen name="InstructorCourseDetail" />
+      <Stack.Screen name="StudentProfileDetail" />
+      <Stack.Screen name="CreateQuizScreen" />
+      <Stack.Screen name="CreateStandardTaskScreen" />
+      
+      {/* Unused/Legacy screens - keeping them accessible just in case */}
+      <Stack.Screen name="InstructorDashboard" />
+      <Stack.Screen name="InstructorModules" />
+      <Stack.Screen name="InstructorEvaluations" />
+    </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBarWithLabels: {
-    position: 'absolute',
-    bottom: 25,
-    left: 16,
-    right: 16,
-    height: 80,
-    borderRadius: 24,
-    borderTopWidth: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: 'transparent',
-    elevation: 0,
-  },
-  blurContainer: {
-    flex: 1,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  tabBarItemWithLabel: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 6,
-  },
-  tabBarLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    marginTop: 2,
-  },
-});

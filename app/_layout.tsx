@@ -4,6 +4,8 @@ import { theme } from '../src/theme/theme'; // الثيم بتاعك
 import BackgroundWrapper from '../components/BackgroundWrapper';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // دمج الثيم بتاعك مع إعدادات الشفافية
 const customTheme = {
@@ -11,7 +13,7 @@ const customTheme = {
   colors: {
     ...DefaultTheme.colors,
     ...theme.colors, // بيسحب كل ألوانك (Primary, Text, etc.)
-    background: '#2b292f', // بيجبر الخلفية تبقى شفافة عشان الـ SVG يظهر
+    background: '#02010a', // يتطابق مع خلفية الشاشات لتجنب الوميض
   },
 };
 
@@ -20,7 +22,7 @@ function RootNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#2b292f', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#02010a', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
@@ -31,7 +33,7 @@ function RootNavigator() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#2b292f' },
+          contentStyle: { backgroundColor: '#02010a' },
           animation: 'fade',
         }}
       >
@@ -44,7 +46,7 @@ function RootNavigator() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#2b292f' },
+          contentStyle: { backgroundColor: '#02010a' },
           animation: 'fade',
         }}
       >
@@ -58,7 +60,7 @@ function RootNavigator() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#2b292f' },
+          contentStyle: { backgroundColor: '#02010a' },
           animation: 'fade',
         }}
       >
@@ -75,12 +77,15 @@ export default function RootLayout() {
   // ... كود الـ Fonts والـ useEffect زي ما هو ...
 
   return (
-    <AuthProvider>
-      <BackgroundWrapper>
-        <ThemeProvider value={customTheme}>
-          <RootNavigator />
-        </ThemeProvider>
-      </BackgroundWrapper>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <BackgroundWrapper>
+          <ThemeProvider value={customTheme}>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </ThemeProvider>
+        </BackgroundWrapper>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

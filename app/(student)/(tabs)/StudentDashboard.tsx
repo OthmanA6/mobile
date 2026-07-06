@@ -28,10 +28,10 @@ import {
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { useRouter } from 'expo-router';
-import { theme } from '../../src/theme/theme';
-import apiClient from '../../src/api/client';
-import { authService } from '../../src/api/auth';
-import CustomAlert, { AlertButton } from '../../components/CustomAlert';
+import { theme } from '../../../src/theme/theme';
+import apiClient from '../../../src/api/client';
+import { authService } from '../../../src/api/auth';
+import CustomAlert, { AlertButton } from '../../../components/CustomAlert';
 
 const { width } = Dimensions.get('window');
 
@@ -270,7 +270,7 @@ export default function StudentDashboard() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: Math.max(insets.top, 24),
+            paddingTop: Math.max(insets.top + 15, 35),
             paddingBottom: insets.bottom + 120, // safe distance from the floating navbar
           },
         ]}
@@ -361,7 +361,7 @@ export default function StudentDashboard() {
         >
           {/* Card 1: Pending Tasks */}
           <Animatable.View animation="fadeInRight" duration={600} delay={100} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/StudentModules', params: { tab: 'tasks' } })} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/(tabs)/StudentModules', params: { tab: 'tasks' } })} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
                   <Clock size={20} color="#f87171" />
@@ -376,7 +376,7 @@ export default function StudentDashboard() {
 
           {/* Card 2: Forms & Surveys */}
           <Animatable.View animation="fadeInRight" duration={600} delay={150} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentForms')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/(tabs)/StudentForms')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(236, 72, 153, 0.15)' }]}>
                   <FileText size={20} color="#f472b6" />
@@ -391,7 +391,7 @@ export default function StudentDashboard() {
 
           {/* Card 3: Enrolled Courses */}
           <Animatable.View animation="fadeInRight" duration={600} delay={200} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/StudentModules', params: { tab: 'courses' } })} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(student)/(tabs)/StudentModules', params: { tab: 'courses' } })} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
                   <BookOpen size={20} color="#cfbcff" />
@@ -406,7 +406,7 @@ export default function StudentDashboard() {
 
           {/* Card 4: Completed */}
           <Animatable.View animation="fadeInRight" duration={600} delay={300} style={styles.metricCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/StudentTasks')} style={{ flex: 1 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/(student)/(tabs)/StudentTasks')} style={{ flex: 1 }}>
               <BlurView intensity={50} tint="dark" style={styles.metricBlur}>
                 <View style={[styles.iconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
                   <CheckCircle2 size={20} color="#34d399" />

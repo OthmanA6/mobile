@@ -1,0 +1,79 @@
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import { StyleSheet, View } from 'react-native';
+import { Home, BookOpen, ClipboardList, FileText } from 'lucide-react-native';
+
+export default function StudentTabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        sceneStyle: { backgroundColor: '#02010a' },
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: '#6366f1',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarItemStyle: styles.tabBarItem,
+        tabBarLabelStyle: styles.tabBarLabel,
+      }}
+    >
+      <Tabs.Screen
+        name="StudentDashboard"
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="StudentModules"
+        options={{
+          tabBarLabel: 'Courses',
+          tabBarIcon: ({ color }) => <BookOpen size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="StudentTasks"
+        options={{
+          tabBarLabel: 'Evaluations',
+          tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="StudentForms"
+        options={{
+          tabBarLabel: 'Surveys',
+          tabBarIcon: ({ color }) => <FileText size={22} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    bottom: 25,
+    left: 20,
+    right: 20,
+    height: 76,
+    borderRadius: 24,
+    borderTopWidth: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#0e0c20',
+    elevation: 0,
+  },
+  tabBarItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingBottom: 6,
+  },
+  tabBarLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginTop: 2,
+  },
+});

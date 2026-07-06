@@ -29,8 +29,8 @@ import {
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../../src/theme/theme';
-import apiClient from '../../src/api/client';
+import { theme } from '../../../src/theme/theme';
+import apiClient from '../../../src/api/client';
 
 type TabType = 'courses' | 'tasks';
 type TaskFilter = 'ALL' | 'OPEN' | 'PENDING' | 'SUBMITTED' | 'GRADED';
@@ -264,7 +264,7 @@ export default function StudentModules() {
       <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
       <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]} />
 
-      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top, 24) }]}>
+      <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         <View style={styles.header}>
           <Text style={styles.title}>Academic Directory</Text>
           <Text style={styles.subtitle}>Manage your enrolled courses and pending assignments</Text>
