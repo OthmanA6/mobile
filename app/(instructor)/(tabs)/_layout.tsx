@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { StyleSheet, View } from 'react-native';
-import { BookOpen, LayoutDashboard, Users, Zap } from 'lucide-react-native';
+import { BookOpen, LayoutDashboard, Users, BarChart3 } from 'lucide-react-native';
 
 export default function InstructorTabLayout() {
   return (
@@ -40,10 +40,10 @@ export default function InstructorTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="AIQuota"
+        name="TaskAnalytics"
         options={{
-          tabBarLabel: 'AI Quota',
-          tabBarIcon: ({ color }) => <Zap size={22} color={color} />,
+          tabBarLabel: 'Analytics',
+          tabBarIcon: ({ color }) => <BarChart3 size={22} color={color} />,
         }}
       />
     </Tabs>

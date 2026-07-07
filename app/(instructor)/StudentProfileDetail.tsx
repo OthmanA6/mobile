@@ -139,8 +139,9 @@ export default function StudentProfileDetail() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -80, right: -80, backgroundColor: 'rgba(99,102,241,0.15)' }]} />
-      <View style={[styles.glowOrb, { bottom: 60, left: -100, backgroundColor: 'rgba(168,85,247,0.1)' }]} />
+      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
+      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
       {/* Header Bar */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>

@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Rocket, BookOpen, Clock, FileText, Paperclip, X } from 'lucide-react-native';
+import { ArrowLeft, Rocket, BookOpen, Clock, FileText, Paperclip, X, Zap } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import apiClient from '../../src/api/client';
 
 export default function CreateStandardTaskScreen() {
@@ -26,7 +27,16 @@ export default function CreateStandardTaskScreen() {
   // Task Details
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [deadline, setDeadline] = useState(''); // Simple string input for MVP
+  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const formatDeadline = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
   const [rubric, setRubric] = useState('');
   
   // Attachments
@@ -34,6 +44,42 @@ export default function CreateStandardTaskScreen() {
 
   // Publish State
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // AI Prompt & State
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleSynthesize = async () => {
+    if (!aiPrompt.trim()) {
+      Alert.alert('Missing Prompt', 'Please describe what you want the AI to generate.');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const payload = JSON.stringify({ prompt: aiPrompt });
+      const response = await apiClient.post('/ai/generate-form', payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const aiTitle = response.data?.data?.title;
+      const aiDescription = response.data?.data?.description;
+
+      if (!aiTitle && !aiDescription) {
+        Alert.alert('Error', 'AI failed to generate task details. Please try a different prompt.');
+      } else {
+        if (!title && aiTitle) setTitle(aiTitle);
+        if (!description && aiDescription) setDescription(aiDescription);
+        
+        if (!rubric) {
+           setRubric(`AI Grader Instructions:\nEvaluate the submission based on the task description. Ensure the core concepts of '${aiTitle || 'the task'}' are met.`);
+        }
+        setAiPrompt('');
+      }
+    } catch (err: any) {
+      Alert.alert('Synthesis Error', err.response?.data?.message || 'Failed to generate AI task details.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handlePickDocument = async () => {
     try {
@@ -57,7 +103,7 @@ export default function CreateStandardTaskScreen() {
   };
 
   const handlePublish = async () => {
-    if (!title.trim() || !description.trim() || !deadline.trim() || !rubric.trim()) {
+    if (!title.trim() || !description.trim() || !deadline || !rubric.trim()) {
       Alert.alert('Incomplete Form', 'Please fill in all task fields: Title, Description, Deadline, and AI Rubric.');
       return;
     }
@@ -71,7 +117,7 @@ export default function CreateStandardTaskScreen() {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('deadline', new Date(deadline).toISOString());
+      formData.append('deadline', deadline.toISOString());
       formData.append('ai_grading_rubric', rubric);
       formData.append('task_type', 'STANDARD');
       formData.append('status', 'ACTIVE');
@@ -109,8 +155,9 @@ export default function CreateStandardTaskScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99,102,241,0.15)' }]} />
-      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168,85,247,0.1)' }]} />
+      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
+      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
@@ -140,17 +187,72 @@ export default function CreateStandardTaskScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Deadline (YYYY-MM-DD)</Text>
-            <View style={styles.inputWithIcon}>
-              <Clock size={16} color="#94a3b8" style={styles.inputIcon} />
-              <TextInput style={styles.inputInner} placeholder="2026-12-01" placeholderTextColor="#475569" value={deadline} onChangeText={setDeadline} />
-            </View>
+            <Text style={styles.label}>Deadline</Text>
+            <TouchableOpacity 
+              style={[styles.inputWithIcon, { paddingHorizontal: 14 }]} 
+              activeOpacity={0.7}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Clock size={16} color={deadline ? '#818cf8' : '#94a3b8'} style={{ marginRight: 8 }} />
+              <Text style={{ color: deadline ? '#fff' : '#475569', fontSize: 14, flex: 1 }}>
+                {deadline ? formatDeadline(deadline) : 'Select a deadline...'}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={deadline || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === 'android') setShowDatePicker(false);
+                  if (selectedDate) setDeadline(selectedDate);
+                }}
+              />
+            )}
+            
+            {showDatePicker && Platform.OS === 'ios' && (
+               <TouchableOpacity 
+                 style={{ backgroundColor: 'rgba(99,102,241,0.15)', padding: 14, borderRadius: 12, marginTop: 12, alignItems: 'center' }} 
+                 onPress={() => setShowDatePicker(false)}
+               >
+                 <Text style={{ color: '#818cf8', fontWeight: '800' }}>Confirm Date</Text>
+               </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>AI Grading Rubric</Text>
             <TextInput style={[styles.input, styles.textArea]} placeholder="Instructions for the AI evaluator (e.g. 'Ensure file contains 5 paragraphs')" placeholderTextColor="#475569" value={rubric} onChangeText={setRubric} multiline />
           </View>
+        </Animatable.View>
+
+        {/* AI Synthesis Form */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={100} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Zap size={16} color="#c084fc" style={{ marginRight: 8 }} />
+            <Text style={[styles.sectionTitle, { color: '#c084fc' }]}>AI Task Generation</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Synthesis Prompt</Text>
+            <TextInput
+              style={[styles.input, styles.textArea, { borderColor: 'rgba(192,132,252,0.3)', backgroundColor: 'rgba(192,132,252,0.05)' }]}
+              placeholder="e.g., Design a case study assignment about ethical AI in healthcare..."
+              placeholderTextColor="#6b7280"
+              value={aiPrompt}
+              onChangeText={setAiPrompt}
+              multiline
+            />
+          </View>
+
+          <TouchableOpacity style={styles.synthesizeBtn} activeOpacity={0.8} onPress={handleSynthesize} disabled={isGenerating}>
+            <LinearGradient colors={['#9333ea', '#7e22ce']} style={styles.synthesizeGradient}>
+              {isGenerating ? <ActivityIndicator size="small" color="#fff" /> : <Zap size={18} color="#fff" />}
+              <Text style={styles.synthesizeBtnText}>{isGenerating ? 'Synthesizing...' : 'Generate Task Details'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </Animatable.View>
 
         {/* Attachments Form */}
@@ -220,6 +322,10 @@ const styles = StyleSheet.create({
   inputWithIcon: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 12, height: 50 },
   inputIcon: { marginLeft: 14, marginRight: 8 },
   inputInner: { flex: 1, color: '#fff', fontSize: 14, height: '100%' },
+
+  synthesizeBtn: { borderRadius: 14, overflow: 'hidden', marginTop: 8 },
+  synthesizeGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  synthesizeBtnText: { color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 },
 
   uploadBtn: { borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
   uploadBtnGradient: { alignItems: 'center', justifyContent: 'center', paddingVertical: 30 },

@@ -16,6 +16,8 @@ import { ArrowLeft, Rocket, Zap, BookOpen, Clock, CheckCircle2, Plus, Type, Alig
 import * as Animatable from 'react-native-animatable';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Platform } from 'react-native';
 import apiClient from '../../src/api/client';
 
 type QuestionType = 'short_text' | 'long_text' | 'multiple_choice' | 'checkbox' | 'linear_scale';
@@ -37,7 +39,16 @@ export default function CreateQuizScreen() {
   // Task Details
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [deadline, setDeadline] = useState(''); 
+  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const formatDeadline = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
   const [rubric, setRubric] = useState('');
 
   // Questions State
@@ -112,7 +123,7 @@ export default function CreateQuizScreen() {
   };
 
   const handlePublish = async () => {
-    if (!title.trim() || !description.trim() || !deadline.trim() || !rubric.trim()) {
+    if (!title.trim() || !description.trim() || !deadline || !rubric.trim()) {
       Alert.alert('Incomplete Form', 'Please fill in all task fields: Title, Description, Deadline, and AI Rubric.');
       return;
     }
@@ -176,7 +187,7 @@ export default function CreateQuizScreen() {
       const taskPayload = {
         title,
         description,
-        deadline: new Date(deadline).toISOString(),
+        deadline: deadline.toISOString(),
         ai_grading_rubric: rubric,
         task_type: 'QUIZ',
         target: { course_id: courseId },
@@ -259,8 +270,9 @@ export default function CreateQuizScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(168,85,247,0.15)' }]} />
-      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(99,102,241,0.1)' }]} />
+      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
+      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
@@ -291,11 +303,39 @@ export default function CreateQuizScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Deadline (YYYY-MM-DD)</Text>
-            <View style={styles.inputWithIcon}>
-              <Clock size={16} color="#94a3b8" style={styles.inputIcon} />
-              <TextInput style={styles.inputInner} placeholder="2026-12-01" placeholderTextColor="#475569" value={deadline} onChangeText={setDeadline} />
-            </View>
+            <Text style={styles.label}>Deadline</Text>
+            <TouchableOpacity 
+              style={[styles.inputWithIcon, { paddingHorizontal: 14 }]} 
+              activeOpacity={0.7}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Clock size={16} color={deadline ? '#818cf8' : '#94a3b8'} style={{ marginRight: 8 }} />
+              <Text style={{ color: deadline ? '#fff' : '#475569', fontSize: 14, flex: 1 }}>
+                {deadline ? formatDeadline(deadline) : 'Select a deadline...'}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={deadline || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === 'android') setShowDatePicker(false);
+                  if (selectedDate) setDeadline(selectedDate);
+                }}
+              />
+            )}
+            
+            {showDatePicker && Platform.OS === 'ios' && (
+               <TouchableOpacity 
+                 style={{ backgroundColor: 'rgba(99,102,241,0.15)', padding: 14, borderRadius: 12, marginTop: 12, alignItems: 'center' }} 
+                 onPress={() => setShowDatePicker(false)}
+               >
+                 <Text style={{ color: '#818cf8', fontWeight: '800' }}>Confirm Date</Text>
+               </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.inputGroup}>

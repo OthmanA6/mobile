@@ -22,6 +22,7 @@ export default function InstructorStackLayout() {
       <Stack.Screen name="InstructorDashboard" />
       <Stack.Screen name="InstructorModules" />
       <Stack.Screen name="InstructorEvaluations" />
+      <Stack.Screen name="AIQuota" />
     </Stack>
   );
 }

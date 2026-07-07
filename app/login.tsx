@@ -85,8 +85,10 @@ export default function LoginScreen() {
       <LinearGradient colors={['#02010a', '#0a0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
       
       {/* Decorative Premium Glows */}
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={[styles.glowOrb, { bottom: -100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.15)' }]} />
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={[styles.glowOrb, { bottom: -100, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView 

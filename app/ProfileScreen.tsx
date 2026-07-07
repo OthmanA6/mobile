@@ -232,6 +232,14 @@ export default function ProfileScreen() {
                 <Text style={styles.settingText}>Edit Profile</Text>
                 <ChevronRight size={18} color={theme.colors.onSurfaceVariant} />
               </TouchableOpacity>
+              
+              {user?.role === 'INSTRUCTOR' && (
+                <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(instructor)/AIQuota')}>
+                  <Zap size={20} color={theme.colors.primary} />
+                  <Text style={styles.settingText}>AI Quota</Text>
+                  <ChevronRight size={18} color={theme.colors.onSurfaceVariant} />
+                </TouchableOpacity>
+              )}
             </BlurView>
           </Animatable.View>
         </View>

@@ -5,7 +5,7 @@ import { Zap, CheckCircle, BarChart3, AlertTriangle } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
-import apiClient from '../../../src/api/client';
+import apiClient from '../../src/api/client';
 
 interface QuotaData {
   totalTokensUsed: number;
@@ -60,15 +60,10 @@ export default function AIQuota() {
   return (
     <View style={styles.container}>
       {/* Dark Premium Gradient Background */}
-      <LinearGradient
-        colors={['#090514', '#0c0a1a', '#02010a']}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Ambient background glows */}
-      <View style={[styles.glowOrb, { top: -100, right: -100, backgroundColor: 'rgba(99, 102, 241, 0.15)' }]} />
-      <View style={[styles.glowOrb, { bottom: 100, left: -150, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]} />
+      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
+      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         {/* Header */}
