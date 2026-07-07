@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, color: theme.colors.onSurfaceVariant, marginTop: 8 },
   glassCard: { borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   form: { padding: 24, gap: 24 },
-  otpContainer: { backgroundColor: '#020617', borderRadius: 12, height: 60, justifyContent: 'center', alignItems: 'center' },
+  otpContainer: { backgroundColor: 'transparent', borderRadius: 12, height: 60, justifyContent: 'center', alignItems: 'center' },
   otpInput: { color: '#fff', fontSize: 24, fontWeight: '900', textAlign: 'center', width: '100%', letterSpacing: 10 },
   verifyButton: { backgroundColor: theme.colors.primary, height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   verifyButtonText: { color: '#fff', fontSize: 18, fontWeight: '900' },

@@ -1,3 +1,4 @@
+import { useTheme } from '../../../src/context/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../../../src/api/client';
+import RadialGlowOrb from '../../../src/components/RadialGlowOrb';
 
 interface TaskSubmission {
   id: string;
@@ -33,6 +35,7 @@ interface TaskSubmission {
 }
 
 export default function StudentTasks() {
+  const { themeMode } = useTheme();
   const insets = useSafeAreaInsets();
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +82,7 @@ export default function StudentTasks() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
         <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(16, 185, 129, 0.2)' }]} />
         <ActivityIndicator size="large" color="#10b981" />
         <Text style={styles.loadingText}>Retrieving Evaluations...</Text>
@@ -89,10 +92,10 @@ export default function StudentTasks() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         <View style={styles.header}>
@@ -193,9 +196,9 @@ export default function StudentTasks() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#02010a' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   glowOrb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.8 },
-  loadingContainer: { flex: 1, backgroundColor: '#02010a', justifyContent: 'center', alignItems: 'center' },
+  loadingContainer: { flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', fontSize: 12, fontWeight: '700', letterSpacing: 2, marginTop: 16, textTransform: 'uppercase' },
   mainWrapper: { flex: 1, paddingHorizontal: 20 },
   header: { marginBottom: 20 },

@@ -1,3 +1,4 @@
+import { useTheme } from '../src/context/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -33,6 +34,7 @@ import {
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../src/api/client';
 import CustomAlert, { AlertButton } from '../components/CustomAlert';
+import RadialGlowOrb from '../src/components/RadialGlowOrb';
 
 interface Question {
   _id: string;
@@ -55,6 +57,7 @@ interface FormSchema {
 }
 
 export default function FormRendererView() {
+  const { themeMode } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { taskId, taskTitle, courseName } = useLocalSearchParams();
@@ -142,7 +145,7 @@ export default function FormRendererView() {
           return;
         }
         result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'],
           quality: 0.8,
         });
       } else {
@@ -152,7 +155,7 @@ export default function FormRendererView() {
           return;
         }
         result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'],
           quality: 0.8,
         });
       }
@@ -402,11 +405,8 @@ export default function FormRendererView() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient
-          colors={['#090514', '#0c0a1a', '#02010a']}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
+        {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.4)" size={400} style={{ top: '25%', left: '15%' }} /> : null}
         <ActivityIndicator size="large" color="#6366f1" />
         <Text style={styles.loadingText}>Fetching Form...</Text>
       </View>
@@ -416,10 +416,7 @@ export default function FormRendererView() {
   if (error || !form) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={['#090514', '#0c0a1a', '#02010a']}
-          style={StyleSheet.absoluteFill}
-        />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <BlurView intensity={30} tint="dark" style={styles.backBlur}>
@@ -447,10 +444,10 @@ export default function FormRendererView() {
       style={styles.container}
     >
       {/* Background Gradients */}
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -464,8 +461,8 @@ export default function FormRendererView() {
           </BlurView>
         </TouchableOpacity>
         
-        <View style={styles.activeFormHeader}>
-          <Text style={styles.activeFormTitle}>{form?.title}</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>{form?.title}</Text>
           
           {/* Task Details Section */}
           {task && (task.description || (task.attachments && task.attachments.length > 0)) && (
@@ -778,7 +775,7 @@ export default function FormRendererView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
   },
   glowOrb: {
     position: 'absolute',
@@ -789,7 +786,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },

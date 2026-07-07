@@ -1,3 +1,4 @@
+import { useTheme } from '../../../src/context/ThemeContext';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -33,6 +34,7 @@ import { useFocusEffect } from 'expo-router';
 import apiClient from '../../../src/api/client';
 import { authService } from '../../../src/api/auth';
 import { theme } from '../../../src/theme/theme';
+import RadialGlowOrb from '../../../src/components/RadialGlowOrb';
 
 interface Question {
   _id: string;
@@ -68,6 +70,7 @@ interface Form {
 }
 
 export default function StudentForms() {
+  const { themeMode } = useTheme();
   const insets = useSafeAreaInsets();
 
   // Screen state: 'list' or 'fill'
@@ -290,7 +293,7 @@ export default function StudentForms() {
           colors={['#090514', '#0c0a1a', '#02010a']}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.glowOrb, { top: '30%', left: '20%', backgroundColor: 'rgba(99, 102, 241, 0.2)' }]} />
+        {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.4)" size={400} style={{ top: '25%', left: '15%' }} /> : null}
         <ActivityIndicator size="large" color="#6366f1" />
         <Text style={styles.loadingText}>Syncing Forms...</Text>
       </View>
@@ -303,10 +306,10 @@ export default function StudentForms() {
       style={styles.container}
     >
       {/* Background Gradients */}
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       {viewState === 'list' ? (
         /* ================= LIST VIEW ================= */
@@ -664,7 +667,7 @@ export default function StudentForms() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
   },
   glowOrb: {
     position: 'absolute',
@@ -675,7 +678,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },

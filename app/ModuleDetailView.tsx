@@ -1,3 +1,4 @@
+import { useTheme } from '../src/context/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -17,6 +18,7 @@ import { ArrowLeft, BookOpen, User, Building2, ClipboardList, ChevronRight } fro
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../src/api/client';
 import CustomAlert, { AlertButton } from '../components/CustomAlert';
+import RadialGlowOrb from '../src/components/RadialGlowOrb';
 
 interface CoursePopulated {
   _id: string;
@@ -36,6 +38,7 @@ interface Survey {
 }
 
 export default function ModuleDetailView() {
+  const { themeMode } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
@@ -171,10 +174,10 @@ export default function ModuleDetailView() {
   return (
     <View style={styles.container}>
       {/* Background Gradients */}
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -306,7 +309,7 @@ export default function ModuleDetailView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
   },
   glowOrb: {
     position: 'absolute',

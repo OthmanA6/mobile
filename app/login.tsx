@@ -25,6 +25,7 @@ import { authService } from '../src/api/auth';
 import { theme } from '../src/theme/theme';
 import { useAuth } from '../src/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import RadialGlowOrb from '../src/components/RadialGlowOrb';
 
 const { width } = Dimensions.get('window');
 
@@ -85,10 +86,14 @@ export default function LoginScreen() {
       <LinearGradient colors={['#02010a', '#0a0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
       
       {/* Decorative Premium Glows */}
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={[styles.glowOrb, { bottom: -100, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={{ position: 'absolute', top: -150, right: -150, width: 500, height: 500 }}>
+        <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} />
+      </Animatable.View>
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={{ position: 'absolute', bottom: -100, left: -200, width: 500, height: 500 }}>
+        <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} />
+      </Animatable.View>
       
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView 
@@ -240,7 +245,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#02010a',
+    backgroundColor: 'transparent',
   },
   glowOrb: {
     position: 'absolute',

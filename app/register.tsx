@@ -21,6 +21,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { authService } from '../src/api/auth';
 import { theme } from '../src/theme/theme';
+import RadialGlowOrb from '../src/components/RadialGlowOrb';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -80,175 +81,188 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={theme.colors.onSurface} />
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
 
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the enterprise AI network.</Text>
-        </View>
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={{ position: 'absolute', top: -150, right: -150, width: 500, height: 500 }}>
+        <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} />
+      </Animatable.View>
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={{ position: 'absolute', bottom: -100, left: -200, width: 500, height: 500 }}>
+        <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} />
+      </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" duration={800}>
-          <BlurView intensity={20} tint="dark" style={styles.glassCard}>
-            <View style={styles.form}>
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.label}>FIRST NAME</Text>
-                  <Controller
-                    control={control}
-                    name="firstName"
-                    render={({ field: { onChange, value } }) => (
-                      <View style={styles.inputWrapper}>
-                        <User size={16} color={theme.colors.onSurfaceVariant} />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="John"
-                          placeholderTextColor={theme.colors.outline}
-                          value={value}
-                          onChangeText={onChange}
-                        />
-                      </View>
-                    )}
-                  />
-                  {errors.firstName && <Text style={styles.errorText}>{errors.firstName.message}</Text>}
-                </View>
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.label}>LAST NAME</Text>
-                  <Controller
-                    control={control}
-                    name="lastName"
-                    render={({ field: { onChange, value } }) => (
-                      <View style={styles.inputWrapper}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Doe"
-                          placeholderTextColor={theme.colors.outline}
-                          value={value}
-                          onChangeText={onChange}
-                        />
-                      </View>
-                    )}
-                  />
-                  {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
-                </View>
-              </View>
+      <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>INSTITUTIONAL EMAIL</Text>
-                <Controller
-                  control={control}
-                  name="email"
-                  render={({ field: { onChange, value } }) => (
-                    <View style={styles.inputWrapper}>
-                      <Mail size={18} color={theme.colors.onSurfaceVariant} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="john@university.edu"
-                        placeholderTextColor={theme.colors.outline}
-                        value={value}
-                        onChangeText={onChange}
-                        keyboardType="email-address"
-                      />
-                    </View>
-                  )}
-                />
-                {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>NATIONAL ID (14 DIGITS)</Text>
-                <Controller
-                  control={control}
-                  name="nationalId"
-                  render={({ field: { onChange, value } }) => (
-                    <View style={styles.inputWrapper}>
-                      <CreditCard size={18} color={theme.colors.onSurfaceVariant} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="29901011234567"
-                        placeholderTextColor={theme.colors.outline}
-                        value={value}
-                        onChangeText={onChange}
-                        keyboardType="number-pad"
-                        maxLength={14}
-                      />
-                    </View>
-                  )}
-                />
-                {errors.nationalId && <Text style={styles.errorText}>{errors.nationalId.message}</Text>}
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>PASSWORD</Text>
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, value } }) => (
-                    <View style={styles.inputWrapper}>
-                      <Lock size={18} color={theme.colors.onSurfaceVariant} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="••••••••"
-                        placeholderTextColor={theme.colors.outline}
-                        value={value}
-                        onChangeText={onChange}
-                        secureTextEntry={!showPassword}
-                      />
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? (
-                          <EyeOff size={18} color={theme.colors.onSurfaceVariant} />
-                        ) : (
-                          <Eye size={18} color={theme.colors.onSurfaceVariant} />
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                />
-                {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>YOUR ROLE</Text>
-                <View style={styles.roleContainer}>
-                  {['STUDENT', 'INSTRUCTOR'].map((r) => (
-                    <TouchableOpacity
-                      key={r}
-                      style={[styles.roleButton, selectedRole === r && styles.roleButtonActive]}
-                      onPress={() => setValue('role', r as any)}
-                    >
-                      <Text style={[styles.roleButtonText, selectedRole === r && styles.roleButtonTextActive]}>
-                        {r}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit(onRegister)}
-                disabled={isLoading}
-              >
-                {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Request Access</Text>}
-              </TouchableOpacity>
-            </View>
-          </BlurView>
-        </Animatable.View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.replace('/login')}>
-            <Text style={styles.loginLink}>Sign In</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join Us</Text>
+          </View>
+
+          <Animatable.View animation="fadeInUp" duration={800}>
+            <BlurView intensity={20} tint="dark" style={styles.glassCard}>
+              <View style={styles.form}>
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.label}>FIRST NAME</Text>
+                    <Controller
+                      control={control}
+                      name="firstName"
+                      render={({ field: { onChange, value } }) => (
+                        <View style={styles.inputWrapper}>
+                          <User size={16} color={theme.colors.onSurfaceVariant} />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="John"
+                            placeholderTextColor={theme.colors.outline}
+                            value={value}
+                            onChangeText={onChange}
+                          />
+                        </View>
+                      )}
+                    />
+                    {errors.firstName && <Text style={styles.errorText}>{errors.firstName.message}</Text>}
+                  </View>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.label}>LAST NAME</Text>
+                    <Controller
+                      control={control}
+                      name="lastName"
+                      render={({ field: { onChange, value } }) => (
+                        <View style={styles.inputWrapper}>
+                          <TextInput
+                            style={styles.input}
+                            placeholder="Doe"
+                            placeholderTextColor={theme.colors.outline}
+                            value={value}
+                            onChangeText={onChange}
+                          />
+                        </View>
+                      )}
+                    />
+                    {errors.lastName && <Text style={styles.errorText}>{errors.lastName.message}</Text>}
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>INSTITUTIONAL EMAIL</Text>
+                  <Controller
+                    control={control}
+                    name="email"
+                    render={({ field: { onChange, value } }) => (
+                      <View style={styles.inputWrapper}>
+                        <Mail size={18} color={theme.colors.onSurfaceVariant} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="john@university.edu"
+                          placeholderTextColor={theme.colors.outline}
+                          value={value}
+                          onChangeText={onChange}
+                          keyboardType="email-address"
+                        />
+                      </View>
+                    )}
+                  />
+                  {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>NATIONAL ID (14 DIGITS)</Text>
+                  <Controller
+                    control={control}
+                    name="nationalId"
+                    render={({ field: { onChange, value } }) => (
+                      <View style={styles.inputWrapper}>
+                        <CreditCard size={18} color={theme.colors.onSurfaceVariant} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="29901011234567"
+                          placeholderTextColor={theme.colors.outline}
+                          value={value}
+                          onChangeText={onChange}
+                          keyboardType="number-pad"
+                          maxLength={14}
+                        />
+                      </View>
+                    )}
+                  />
+                  {errors.nationalId && <Text style={styles.errorText}>{errors.nationalId.message}</Text>}
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>PASSWORD</Text>
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={({ field: { onChange, value } }) => (
+                      <View style={styles.inputWrapper}>
+                        <Lock size={18} color={theme.colors.onSurfaceVariant} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="••••••••"
+                          placeholderTextColor={theme.colors.outline}
+                          value={value}
+                          onChangeText={onChange}
+                          secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                          {showPassword ? (
+                            <EyeOff size={18} color={theme.colors.onSurfaceVariant} />
+                          ) : (
+                            <Eye size={18} color={theme.colors.onSurfaceVariant} />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  />
+                  {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>YOUR ROLE</Text>
+                  <View style={styles.roleContainer}>
+                    {['STUDENT', 'INSTRUCTOR'].map((r) => (
+                      <TouchableOpacity
+                        key={r}
+                        style={[styles.roleButton, selectedRole === r && styles.roleButtonActive]}
+                        onPress={() => setValue('role', r as any)}
+                      >
+                        <Text style={[styles.roleButtonText, selectedRole === r && styles.roleButtonTextActive]}>
+                          {r}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={handleSubmit(onRegister)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Request Access</Text>}
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </Animatable.View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <TouchableOpacity onPress={() => router.replace('/login')}>
+              <Text style={styles.loginLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -313,7 +327,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#020617',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',

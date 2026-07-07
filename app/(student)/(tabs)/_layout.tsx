@@ -1,17 +1,36 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Home, BookOpen, ClipboardList, FileText } from 'lucide-react-native';
+import { useTheme } from '../../../src/context/ThemeContext';
 
 export default function StudentTabLayout() {
+  const { themeMode } = useTheme();
+  const isLight = themeMode === 'light';
+
   return (
     <Tabs
       screenOptions={{
-        sceneStyle: { backgroundColor: '#02010a' },
+        sceneStyle: { backgroundColor: 'transparent' },
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 25,
+          left: 20,
+          right: 20,
+          height: 76,
+          borderRadius: 24,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: isLight ? '#ffffff' : '#0e0c20',
+          elevation: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isLight ? 0.08 : 0,
+          shadowRadius: 12,
+        },
         tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#94a3b8',
         tabBarItemStyle: styles.tabBarItem,
@@ -51,19 +70,6 @@ export default function StudentTabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    bottom: 25,
-    left: 20,
-    right: 20,
-    height: 76,
-    borderRadius: 24,
-    borderTopWidth: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: '#0e0c20',
-    elevation: 0,
-  },
   tabBarItem: {
     justifyContent: 'center',
     alignItems: 'center',

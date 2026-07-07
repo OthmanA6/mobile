@@ -1,3 +1,4 @@
+import { useTheme } from '../../src/context/ThemeContext';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -29,6 +30,7 @@ import * as Animatable from 'react-native-animatable';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../src/api/client';
+import RadialGlowOrb from '../../src/components/RadialGlowOrb';
 
 type Tab = 'overview' | 'mastery' | 'history';
 
@@ -61,6 +63,7 @@ interface ProfileAnalyticsResponse {
 }
 
 export default function StudentProfileDetail() {
+  const { themeMode } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { studentId } = useLocalSearchParams<{ studentId: string }>();
@@ -92,7 +95,7 @@ export default function StudentProfileDetail() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
         <ActivityIndicator size="large" color="#6366f1" />
         <Text style={styles.loadingText}>Generating Profile Data...</Text>
       </View>
@@ -102,7 +105,7 @@ export default function StudentProfileDetail() {
   if (error || !data) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
         <AlertTriangle size={32} color="#f87171" style={{ marginBottom: 16 }} />
         <Text style={[styles.loadingText, { color: '#f87171' }]}>{error || 'Failed to load profile data'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchData}>
@@ -138,10 +141,10 @@ export default function StudentProfileDetail() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       {/* Header Bar */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>
@@ -409,9 +412,9 @@ export default function StudentProfileDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#02010a' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   glowOrb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.8 },
-  loadingContainer: { flex: 1, backgroundColor: '#02010a', justifyContent: 'center', alignItems: 'center' },
+  loadingContainer: { flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', fontSize: 12, fontWeight: '700', letterSpacing: 2, marginTop: 16, textTransform: 'uppercase' },
   retryBtn: { marginTop: 20, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
   retryBtnText: { color: '#fff', fontWeight: 'bold' },

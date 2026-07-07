@@ -1,19 +1,38 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { BookOpen, LayoutDashboard, Users, BarChart3 } from 'lucide-react-native';
+import { useTheme } from '../../../src/context/ThemeContext';
 
 export default function InstructorTabLayout() {
+  const { themeMode } = useTheme();
+  const isLight = themeMode === 'light';
+
   return (
     <Tabs
       screenOptions={{
-        sceneStyle: { backgroundColor: '#02010a' },
+        sceneStyle: { backgroundColor: 'transparent' },
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarStyle: styles.tabBarWithLabels,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 25,
+          left: 16,
+          right: 16,
+          height: 80,
+          borderRadius: 24,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: isLight ? '#ffffff' : '#0e0c20',
+          elevation: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isLight ? 0.08 : 0,
+          shadowRadius: 12,
+        },
         tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarInactiveTintColor: isLight ? '#94a3b8' : '#94a3b8',
         tabBarItemStyle: styles.tabBarItemWithLabel,
         tabBarLabelStyle: styles.tabBarLabel,
       }}
@@ -51,19 +70,6 @@ export default function InstructorTabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBarWithLabels: {
-    position: 'absolute',
-    bottom: 25,
-    left: 16,
-    right: 16,
-    height: 80,
-    borderRadius: 24,
-    borderTopWidth: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: '#0e0c20',
-    elevation: 0,
-  },
   tabBarItemWithLabel: {
     justifyContent: 'center',
     alignItems: 'center',

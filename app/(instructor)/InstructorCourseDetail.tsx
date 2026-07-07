@@ -1,3 +1,4 @@
+import { useTheme } from '../../src/context/ThemeContext';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -33,6 +34,7 @@ import * as Animatable from 'react-native-animatable';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../src/api/client';
+import RadialGlowOrb from '../../src/components/RadialGlowOrb';
 
 type Tab = 'tasks' | 'students';
 
@@ -62,9 +64,17 @@ interface Submission {
   status: 'SUBMITTED' | 'AI_GRADED' | 'FINALIZED';
   final_grade?: number;
   createdAt?: string;
+  content?: string;
+  attachments?: { url: string; fileName?: string; size?: number }[];
+  ai_evaluation?: {
+    suggested_grade?: number;
+    feedback?: string;
+    weaknesses?: string[];
+  };
 }
 
 export default function InstructorCourseDetail() {
+  const { themeMode } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
@@ -78,6 +88,7 @@ export default function InstructorCourseDetail() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
   const getBaseUrl = () => {
     const base = process.env.EXPO_PUBLIC_API_URL || 'http://10.171.240.63:5000/api';
@@ -153,7 +164,7 @@ export default function InstructorCourseDetail() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} />
+        {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} style={StyleSheet.absoluteFill} /> : null}
         <ActivityIndicator size="large" color="#6366f1" />
         <Text style={styles.loadingText}>Loading Course...</Text>
       </View>
@@ -162,10 +173,10 @@ export default function InstructorCourseDetail() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glowOrb, { top: -150, right: -100, backgroundColor: 'rgba(99,102,241,0.45)' }]} />
-      <View style={[styles.glowOrb, { bottom: 50, left: -150, backgroundColor: 'rgba(168,85,247,0.35)' }]} />
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
+      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
       {/* Header */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 10, 30) }]}>
@@ -350,6 +361,7 @@ export default function InstructorCourseDetail() {
 
                 return (
                   <Animatable.View key={sub._id} animation="fadeInUp" duration={500} delay={index * 50} style={styles.submissionCard}>
+                    <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedSubmission(sub)}>
                     <BlurView intensity={40} tint="dark" style={styles.submissionBlur}>
                       <View style={styles.submissionLeft}>
                         <View style={styles.avatar}>
@@ -374,6 +386,7 @@ export default function InstructorCourseDetail() {
                         )}
                       </View>
                     </BlurView>
+                    </TouchableOpacity>
                   </Animatable.View>
                 );
               })
@@ -431,14 +444,86 @@ export default function InstructorCourseDetail() {
           </Animatable.View>
         </View>
       </Modal>
+
+      {/* Submission Detail Modal */}
+      <Modal visible={!!selectedSubmission} transparent animationType="fade" onRequestClose={() => setSelectedSubmission(null)}>
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+          <Animatable.View animation="slideInUp" duration={400} style={[styles.modalContainer, { width: '95%', maxHeight: '85%' }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Submission Details</Text>
+                <Text style={styles.modalSubtitle}>
+                  {selectedSubmission?.submitter_id?.firstName} {selectedSubmission?.submitter_id?.lastName}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedSubmission(null)} style={styles.modalCloseBtn}>
+                <X size={20} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+              {selectedSubmission?.content ? (
+                <View style={styles.subSection}>
+                  <Text style={styles.subSectionTitle}>Student Answer</Text>
+                  <Text style={styles.subContentText}>{selectedSubmission.content}</Text>
+                </View>
+              ) : null}
+
+              {selectedSubmission?.attachments && selectedSubmission.attachments.length > 0 && (
+                <View style={styles.subSection}>
+                  <Text style={styles.subSectionTitle}>Attachments</Text>
+                  {selectedSubmission.attachments.map((att, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      style={styles.attachmentRow}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        const url = getFullUrl(att.url);
+                        if (url) Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open attachment.'));
+                      }}
+                    >
+                      <FileText size={13} color="#818cf8" />
+                      <Text style={styles.attachmentName} numberOfLines={1}>{att.fileName || `Attachment ${i + 1}`}</Text>
+                      <Download size={12} color="#94a3b8" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {selectedSubmission?.ai_evaluation ? (
+                <View style={styles.aiEvalBox}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
+                    <Target size={16} color="#818cf8" />
+                    <Text style={{ color: '#fff', fontWeight: '800' }}>AI Evaluation</Text>
+                  </View>
+                  <Text style={{ color: '#34d399', fontWeight: '800', marginBottom: 8 }}>Suggested Grade: {selectedSubmission.ai_evaluation.suggested_grade}%</Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 13, lineHeight: 20 }}>{selectedSubmission.ai_evaluation.feedback}</Text>
+                  
+                  {selectedSubmission.ai_evaluation.weaknesses && selectedSubmission.ai_evaluation.weaknesses.length > 0 && (
+                    <View style={{ marginTop: 12 }}>
+                      <Text style={{ color: '#fca5a5', fontWeight: '700', fontSize: 12, marginBottom: 4 }}>Weaknesses:</Text>
+                      {selectedSubmission.ai_evaluation.weaknesses.map((w, idx) => (
+                        <Text key={idx} style={{ color: '#94a3b8', fontSize: 12 }}>• {w}</Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ) : null}
+
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </Animatable.View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#02010a' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   glowOrb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.8 },
-  loadingContainer: { flex: 1, backgroundColor: '#02010a', justifyContent: 'center', alignItems: 'center' },
+  loadingContainer: { flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', fontSize: 12, fontWeight: '700', letterSpacing: 2, marginTop: 16, textTransform: 'uppercase' },
   // Top Bar
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 },
@@ -521,4 +606,8 @@ const styles = StyleSheet.create({
   typeOptionIcon: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   typeOptionTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc', textTransform: 'uppercase', letterSpacing: 0.5 },
   typeOptionDesc: { fontSize: 11, fontWeight: '500', color: '#94a3b8', marginTop: 6 },
+  subSection: { marginBottom: 20 },
+  subSectionTitle: { fontSize: 12, fontWeight: '800', color: '#818cf8', textTransform: 'uppercase', marginBottom: 8 },
+  subContentText: { fontSize: 14, color: '#e2e8f0', lineHeight: 22, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  aiEvalBox: { backgroundColor: 'rgba(99,102,241,0.08)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(99,102,241,0.2)', marginTop: 10 },
 });

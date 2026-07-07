@@ -5,6 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp } from 'lucide-react-native';
 import * as Animatable from 'react-native-animatable';
 import { theme } from '../src/theme/theme';
+import { BlurView } from 'expo-blur';
+import RadialGlowOrb from '../src/components/RadialGlowOrb';
 
 const { width } = Dimensions.get('window');
 
@@ -23,20 +25,26 @@ export default function SplashScreen() {
     <View style={styles.container}>
       {/* Base Background Gradient */}
       <LinearGradient
-        colors={['#020617', '#0f172a']}
+        colors={['#090514', '#0c0a1a', '#02010a']}
         style={StyleSheet.absoluteFill}
       />
 
       {/* Contextual Background Texture Image */}
       <Image
         source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCW6dXEs3-2iSdGTVzF0EFMyEcAQ7dxY4Ki68Qa7K8wAU5m2fso9vlMZzgT72EsHnksg2fDRBLD3iRHb6Oe8Vk1aObX8JIj5xRS39KZiN2QIU6JOIctyoi44O0IIr8YO7SV6DShbYKqVDix8IQcDZdEXA_Ljr7zeuqsckXbP0dI75OTwA8-ruW4AqtYJSnKPOTrUnk3g7Q8nzOdtBo_DoMnzLzqYeGIgka6-ltIdcGF3dGThH4uXRi0-yigFya57mpWMCVtxVkZm70' }}
-        style={[StyleSheet.absoluteFill, { opacity: 0.2 }]}
+        style={[StyleSheet.absoluteFill, { opacity: 0.1 }]}
         resizeMode="cover"
       />
 
       {/* Decorative Glows */}
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={4000} style={[styles.glow, styles.topGlow, { opacity: 0.2 }]} />
-      <Animatable.View animation="pulse" iterationCount="infinite" duration={4000} delay={2000} style={[styles.glow, styles.bottomGlow, { opacity: 0.2 }]} />
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={6000} style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400 }}>
+        <RadialGlowOrb color="rgba(99,102,241,0.6)" size={400} />
+      </Animatable.View>
+      <Animatable.View animation="pulse" iterationCount="infinite" duration={7000} delay={1000} style={{ position: 'absolute', bottom: -100, left: -100, width: 400, height: 400 }}>
+        <RadialGlowOrb color="rgba(168,85,247,0.5)" size={400} />
+      </Animatable.View>
+
+      <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
 
       <Animatable.View animation="zoomIn" duration={1000} easing="ease-out-back" style={styles.logoContainer}>
         <View style={styles.iconBox}>
