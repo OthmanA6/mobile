@@ -77,7 +77,7 @@ export default function InstructorCourseDetail() {
   const { themeMode } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { courseId } = useLocalSearchParams<{ courseId: string }>();
+  const { courseId, highlightTaskId } = useLocalSearchParams<{ courseId: string; highlightTaskId?: string }>();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -89,6 +89,22 @@ export default function InstructorCourseDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [filterTaskId, setFilterTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (highlightTaskId) {
+      setFilterTaskId(highlightTaskId);
+      setActiveTab('students');
+    }
+  }, [highlightTaskId]);
+
+  const displayedSubmissions = useMemo(() => {
+    if (!filterTaskId) return allSubmissions;
+    return allSubmissions.filter((sub) => {
+      const subTaskId = typeof sub.task_id === 'object' ? sub.task_id._id : sub.task_id;
+      return subTaskId === filterTaskId;
+    });
+  }, [allSubmissions, filterTaskId]);
 
   const getBaseUrl = () => {
     const base = process.env.EXPO_PUBLIC_API_URL || 'http://10.171.240.63:5000/api';
@@ -174,7 +190,7 @@ export default function InstructorCourseDetail() {
   return (
     <View style={styles.container}>
       {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
-      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
+      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -200 }} /> : null}
       {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
       {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
 
@@ -326,10 +342,17 @@ export default function InstructorCourseDetail() {
                             {isExpired ? 'Expired · ' : 'Due · '}{formatDate(task.deadline)}
                           </Text>
                         </View>
-                        <View style={styles.taskMeta}>
-                          <FileText size={13} color="#94a3b8" />
-                          <Text style={styles.taskSubCount}>{subs.length} Submissions</Text>
-                        </View>
+                        <TouchableOpacity
+                          style={[styles.taskMeta, { backgroundColor: 'rgba(99,102,241,0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }]}
+                          onPress={() => {
+                            setFilterTaskId(task._id);
+                            setActiveTab('students');
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <FileText size={13} color="#818cf8" />
+                          <Text style={[styles.taskSubCount, { color: '#a5b4fc', fontWeight: '700' }]}>{subs.length} Submissions</Text>
+                        </TouchableOpacity>
                       </View>
                     </BlurView>
                   </Animatable.View>
@@ -342,14 +365,32 @@ export default function InstructorCourseDetail() {
         {/* ── STUDENT PROGRESS TAB ────────────────────────────────────── */}
         {activeTab === 'students' && (
           <View style={styles.tabContent}>
-            {allSubmissions.length === 0 ? (
+            {filterTaskId && (
+              <BlurView intensity={30} tint="dark" style={styles.filterBanner}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.filterBannerTitle}>Filtering by Task</Text>
+                  <Text style={styles.filterBannerSubtitle} numberOfLines={1}>
+                    {tasks.find((t) => t._id === filterTaskId)?.title || 'Selected Task'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.clearFilterBtn}
+                  onPress={() => setFilterTaskId(null)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.clearFilterText}>Show All</Text>
+                </TouchableOpacity>
+              </BlurView>
+            )}
+
+            {displayedSubmissions.length === 0 ? (
               <BlurView intensity={20} tint="dark" style={styles.emptyCard}>
                 <Users size={32} color="#4f46e5" />
-                <Text style={styles.emptyTitle}>No Submissions Yet</Text>
-                <Text style={styles.emptyText}>No student submissions recorded for this module.</Text>
+                <Text style={styles.emptyTitle}>No Submissions Found</Text>
+                <Text style={styles.emptyText}>No submissions match the selected task.</Text>
               </BlurView>
             ) : (
-              allSubmissions.map((sub, index) => {
+              displayedSubmissions.map((sub, index) => {
                 const student = typeof sub.submitter_id === 'object' ? sub.submitter_id : null;
                 const studentName = student ? `${student.firstName} ${student.lastName}` : 'Unknown Student';
                 const initials = student ? student.firstName?.charAt(0)?.toUpperCase() || '?' : '?';
@@ -610,4 +651,9 @@ const styles = StyleSheet.create({
   subSectionTitle: { fontSize: 12, fontWeight: '800', color: '#818cf8', textTransform: 'uppercase', marginBottom: 8 },
   subContentText: { fontSize: 14, color: '#e2e8f0', lineHeight: 22, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   aiEvalBox: { backgroundColor: 'rgba(99,102,241,0.08)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(99,102,241,0.2)', marginTop: 10 },
+  filterBanner: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(99,102,241,0.2)', backgroundColor: 'rgba(99,102,241,0.05)', marginBottom: 6 },
+  filterBannerTitle: { fontSize: 10, fontWeight: '800', color: '#818cf8', textTransform: 'uppercase', letterSpacing: 1 },
+  filterBannerSubtitle: { fontSize: 14, fontWeight: '700', color: '#fff', marginTop: 2 },
+  clearFilterBtn: { backgroundColor: 'rgba(255,255,255,0.08)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  clearFilterText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });

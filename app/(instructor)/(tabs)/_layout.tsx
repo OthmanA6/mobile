@@ -11,7 +11,7 @@ export default function InstructorTabLayout() {
   return (
     <Tabs
       screenOptions={{
-        sceneStyle: { backgroundColor: 'transparent' },
+        sceneStyle: { backgroundColor: '#020617' },
         headerShown: false,
         tabBarShowLabel: true,
         tabBarStyle: {

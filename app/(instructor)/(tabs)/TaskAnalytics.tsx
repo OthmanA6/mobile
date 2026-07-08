@@ -8,6 +8,7 @@ import * as Animatable from 'react-native-animatable';
 import { BarChart3, ClipboardList, ClipboardCheck, ClipboardX, TrendingUp, AlertCircle, FileText, CheckCircle2 } from 'lucide-react-native';
 import apiClient from '../../../src/api/client';
 import RadialGlowOrb from '../../../src/components/RadialGlowOrb';
+import ScreenBackground from '../../../src/components/ScreenBackground';
 
 interface AnalyticsSummary {
   totalTasks: number;
@@ -98,11 +99,7 @@ export default function TaskAnalytics() {
   }
 
   return (
-    <View style={styles.container}>
-      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
-      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
-      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
-      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
+    <ScreenBackground style={styles.container}>
 
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         <View style={styles.header}>
@@ -236,7 +233,7 @@ export default function TaskAnalytics() {
           )}
         </ScrollView>
       </View>
-    </View>
+    </ScreenBackground>
   );
 }
 

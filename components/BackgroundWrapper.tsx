@@ -43,7 +43,7 @@ export default function BackgroundWrapper({ children }: BackgroundWrapperProps) 
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, styles.containerDark]}>
       <Svg height="100%" width="100%" style={StyleSheet.absoluteFill}>
         <Defs>
           <Pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -72,6 +72,9 @@ export default function BackgroundWrapper({ children }: BackgroundWrapperProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  containerDark: {
+    backgroundColor: '#020617',
   },
   content: {
     flex: 1,

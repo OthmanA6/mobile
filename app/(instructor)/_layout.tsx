@@ -6,7 +6,7 @@ export default function InstructorStackLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: 'transparent' },
+        contentStyle: { backgroundColor: '#020617' },
         animation: 'slide_from_right', // Native-like stack animation
       }}
     >

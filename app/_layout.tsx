@@ -2,7 +2,6 @@ import { Stack } from 'expo-router';
 import { ThemeProvider as NavThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
-import BackgroundWrapper from '../components/BackgroundWrapper';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -28,7 +27,7 @@ function RootNavigator() {
         ...DarkTheme,
         colors: {
           ...DarkTheme.colors,
-          background: theme.colors.background,
+          background: '#020617',
           card: theme.colors.card,
           text: theme.colors.text,
           border: theme.colors.outline,
@@ -45,7 +44,7 @@ function RootNavigator() {
           />
         ) : null}
         {themeMode === 'dark' ? (
-          <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} />
+          <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -200 }} />
         ) : null}
         {themeMode === 'dark' ? (
           <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} />
@@ -62,7 +61,7 @@ function RootNavigator() {
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.background },
+            contentStyle: { backgroundColor: '#020617' },
             animation: 'fade',
           }}
         >
@@ -78,7 +77,7 @@ function RootNavigator() {
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.background },
+            contentStyle: { backgroundColor: '#020617' },
             animation: 'fade',
           }}
         >
@@ -94,7 +93,7 @@ function RootNavigator() {
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.background },
+            contentStyle: { backgroundColor: '#02010a' },
             animation: 'fade',
           }}
         >
@@ -111,7 +110,7 @@ function RootNavigator() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#020617',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -122,9 +121,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <ThemeProvider>
-          <BackgroundWrapper>
+          <View style={{ flex: 1, backgroundColor: '#020617' }}>
             <RootNavigator />
-          </BackgroundWrapper>
+          </View>
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>

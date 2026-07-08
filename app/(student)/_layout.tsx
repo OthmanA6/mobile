@@ -6,7 +6,7 @@ export default function StudentStackLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: 'transparent' },
+        contentStyle: { backgroundColor: '#020617' },
         animation: 'slide_from_right',
       }}
     >

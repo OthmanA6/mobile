@@ -245,7 +245,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#02010a',
   },
   glowOrb: {
     position: 'absolute',

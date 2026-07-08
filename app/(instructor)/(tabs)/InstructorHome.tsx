@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import apiClient from '../../../src/api/client';
+import ScreenBackground from '../../../src/components/ScreenBackground';
 import RadialGlowOrb from '../../../src/components/RadialGlowOrb';
 
 interface Course {
@@ -163,11 +164,7 @@ export default function InstructorHome() {
   }
 
   return (
-    <View style={styles.container}>
-      {themeMode === 'dark' ? <LinearGradient colors={['#090514', '#0c0a1a', '#02010a']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} /> : null}
-      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(99,102,241,0.6)" size={500} style={{ top: -150, right: -150 }} /> : null}
-      {themeMode === 'dark' ? <RadialGlowOrb color="rgba(168,85,247,0.5)" size={500} style={{ bottom: -50, left: -200 }} /> : null}
-      {themeMode === 'dark' ? <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} /> : null}
+    <ScreenBackground style={styles.container}>
 
       <View style={[styles.mainWrapper, { paddingTop: Math.max(insets.top + 15, 35) }]}>
         <FlatList
@@ -307,7 +304,7 @@ export default function InstructorHome() {
           }
         />
       </View>
-    </View>
+    </ScreenBackground>
   );
 }
 
